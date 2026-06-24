@@ -5,8 +5,8 @@ Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.0
 Stable tag: 1.0.0
-License: GPLv3
-License URI: https://opensource.org/licenses/GPL-3.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Convert Figma designs directly into editable Elementor templates. Full style preservation — colors, typography, gradients, shadows, and more.
 

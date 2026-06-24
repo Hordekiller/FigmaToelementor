@@ -200,31 +200,50 @@ The plugin follows a service-oriented architecture:
 
 ## Contributing
 
-Contributions are welcome! Here's how you can help:
+**All development happens on this repository.** We do not allow separate distributions, rebranded versions, or standalone forks. If you want to extend the plugin, do it here — submit a Pull Request so everyone benefits.
 
-1. **Fork** the repo
-2. **Create** a feature branch (`git checkout -b feature/amazing`)
-3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing`)
-5. **Open a Pull Request**
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the full guide.
+
+### Quick Start
+
+```bash
+git clone https://github.com/Hordekiller/FigmaToelementor.git
+cd FigmaToelementor
+git checkout -b feature/your-feature
+# Make your changes, then:
+git commit -m "feat: describe your change"
+git push origin feature/your-feature
+# Open a Pull Request
+```
 
 ### Development Setup
 
 ```bash
-# Clone the repo
-git clone https://github.com/Hordekiller/FigmaToelementor.git
-cd FigmaToelementor
-
-# For WordPress development, symlink into your plugins directory
+# Symlink into your WordPress plugins directory
 ln -s $(pwd) /path/to/wp-content/plugins/hello-elementor-figma-sync
 ```
 
-### Coding Standards
+### Contributors
 
-- PHP: [PSR-12](https://www.php-fig.org/psr/psr-12/) + [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/)
-- JavaScript: [ES6+](https://262.ecma-international.org/)
-- Namespace: `HelloFigma\*`
-- File naming: `class-{name}.php`
+<a href="https://github.com/Hordekiller/FigmaToelementor/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Hordekiller/FigmaToelementor" />
+</a>
+
+---
+
+## License
+
+**GNU General Public License v2.0 or later** — see [LICENSE](LICENSE) for details.
+
+This license ensures that:
+- ✅ You may **use** the plugin on any WordPress site
+- ✅ You may **modify** the code for your own needs
+- ✅ You may **share** copies with the GPL license included
+- ❌ You may **NOT** distribute modified versions without source code
+- ❌ You may **NOT** incorporate it into proprietary software
+- ❌ You may **NOT** create standalone forks or rebranded versions
+
+All contributors retain copyright of their contributions, which are licensed under the same GPLv2+ terms.
 
 ---
 

@@ -15,8 +15,8 @@ declare(strict_types=1);
  * Tested up to:    6.9
  * Elementor tested up to: 3.27.0
  * Elementor Pro tested up to: 3.27.0
- * License:         GPLv3
- * License URI:     https://opensource.org/licenses/GPL-3.0
+ * License:         GPLv2 or later
+ * License URI:     https://www.gnu.org/licenses/gpl-2.0.html
  *
  * Requires Plugins: elementor
  *
