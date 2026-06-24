@@ -2,12 +2,12 @@
 declare(strict_types=1);
 
 /**
- * Plugin Name:     Hello Elementor Figma Sync
- * Plugin URI:      https://github.com/your-repo/hello-elementor-figma-sync
- * Description:     تبدیل مستقیم طرح‌های فیگما به قالب‌های المنتور با پشتیبانی کامل از Hello Elementor و Elementor Pro
+ * Plugin Name:     Figma to Elementor
+ * Plugin URI:      https://github.com/Hordekiller/FigmaToelementor
+ * Description:     Convert Figma designs into Elementor templates with full style preservation. Supports Flexbox Containers, typography, colors, gradients, and more.
  * Version:         1.0.0
- * Author:          Your Name
- * Author URI:      https://your-site.com
+ * Author:          Hordekiller
+ * Author URI:      https://github.com/Hordekiller
  * Text Domain:     hello-figma
  * Domain Path:     /languages
  * Requires at least: 6.6

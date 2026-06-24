@@ -1,6 +1,6 @@
-=== Hello Elementor Figma Sync ===
-Contributors: yourname
-Tags: figma, elementor, hello-elementor, figma to elementor, template converter, design to wp
+=== Figma to Elementor ===
+Contributors: Hordekiller
+Tags: figma, elementor, hello-elementor, figma to elementor, template converter, design to wp, figma import
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.0
@@ -8,24 +8,24 @@ Stable tag: 1.0.0
 License: GPLv3
 License URI: https://opensource.org/licenses/GPL-3.0
 
-Convert Figma designs directly into editable Elementor templates. Seamless integration with Hello Elementor theme and Elementor Pro.
+Convert Figma designs directly into editable Elementor templates. Full style preservation — colors, typography, gradients, shadows, and more.
 
 == Description ==
 
-**Hello Elementor Figma Sync** bridges the gap between Figma and WordPress, allowing designers and developers to convert Figma frames into fully editable Elementor templates with a single click.
+**Figma to Elementor** bridges the gap between design and development. It fetches your Figma frames via the REST API, translates every visual property into native Elementor JSON, and saves them as editable templates.
 
 = Key Features =
 
-* **One-Click Conversion** — Select a Figma file key, and get a complete Elementor template.
-* **Smart Element Mapping** — Figma layers automatically map to the correct Elementor widgets (container, heading, button, image, etc.).
+* **One-Click Import** — Paste any Figma URL, auto-extracts the file key.
+* **Full Style Mapping** — Colors, typography, borders, gradients, shadows, opacity — all preserved.
+* **Component Breakdown** — Each section becomes an independently editable Elementor container.
+* **Container-native** — Built for Elementor Flexbox Containers.
+* **Typography Preserved** — Font family, size, weight, line height, letter spacing, transforms.
+* **Gradient Support** — Linear gradients with accurate color stops.
 * **Global Style Sync** — Sync Figma color and typography styles to Elementor global settings.
-* **Auto Layout Support** — Figma Auto Layout converts to Elementor Flexbox containers.
-* **Image Auto-Upload** — Figma images download directly to your WordPress Media Library.
-* **Custom Elementor Widgets** — 6 dedicated Figma widgets for perfect design fidelity.
-* **Elementor Pro Dynamic Tags** — Use Figma data in any Elementor dynamic field.
+* **Editor Integration** — Import directly inside Elementor editor via `$e.run()` commands.
 * **Template Library** — Save, manage, export, and re-use imported templates.
 * **RTL Support** — Full Persian/Arabic language support.
-* **Hello Elementor Optimized** — Built specifically for the Hello Elementor theme.
 
 = How It Works =
 
@@ -37,11 +37,12 @@ Convert Figma designs directly into editable Elementor templates. Seamless integ
 
 == Installation ==
 
-1. Upload the `hello-elementor-figma-sync` folder to `/wp-content/plugins/`.
-2. Activate the plugin through the Plugins menu in WordPress.
-3. Go to the new "Figma Sync" menu in your admin dashboard.
-4. Enter your Figma Personal Access Token and default file key in Settings.
-5. Start converting designs!
+1. Download the latest release or clone: `git clone https://github.com/Hordekiller/FigmaToelementor.git`
+2. Rename the folder to `hello-elementor-figma-sync` and upload to `/wp-content/plugins/`.
+3. Activate the plugin through the Plugins menu in WordPress.
+4. Go to the new "Figma Sync" menu in your admin dashboard.
+5. Enter your Figma Personal Access Token in Settings.
+6. Paste a Figma URL and start converting!
 
 == Frequently Asked Questions ==
 
