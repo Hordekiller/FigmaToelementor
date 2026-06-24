@@ -1,0 +1,148 @@
+# Persian (Iran) translation for Hello Elementor Figma Sync
+# Copyright (C) 2024
+# This file is distributed under the GPLv3 license.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Hello Elementor Figma Sync 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: Persian\n"
+"Language: fa_IR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Hello Elementor Figma Sync"
+msgstr "همگام‌ساز فیگما با المنتور"
+
+msgid "Convert Figma designs directly into editable Elementor templates."
+msgstr "تبدیل مستقیم طرح‌های فیگما به قالب‌های قابل ویرایش المنتور."
+
+# Plugin description
+msgid "Figma Sync"
+msgstr "همگام‌سازی فیگما"
+
+msgid "Dashboard"
+msgstr "داشبورد"
+
+msgid "Templates"
+msgstr "قالب‌ها"
+
+msgid "Style Sync"
+msgstr "همگام‌سازی استایل"
+
+msgid "Settings"
+msgstr "تنظیمات"
+
+msgid "Figma Connection"
+msgstr "اتصال فیگما"
+
+msgid "Connected"
+msgstr "متصل"
+
+msgid "Not Connected"
+msgstr "متصل نیست"
+
+msgid "Configure Token"
+msgstr "تنظیم توکن"
+
+msgid "Imported Templates"
+msgstr "قالب‌های وارد شده"
+
+msgid "Quick Convert"
+msgstr "تبدیل سریع"
+
+msgid "Figma File Key"
+msgstr "کلید فایل فیگما"
+
+msgid "Node ID (optional)"
+msgstr "شناسه نود (اختیاری)"
+
+msgid "Convert Now"
+msgstr "تبدیل کن"
+
+msgid "Recent Imports"
+msgstr "واردات اخیر"
+
+msgid "Title"
+msgstr "عنوان"
+
+msgid "Type"
+msgstr "نوع"
+
+msgid "Date"
+msgstr "تاریخ"
+
+msgid "Actions"
+msgstr "عملیات"
+
+msgid "Edit"
+msgstr "ویرایش"
+
+msgid "Edit with Elementor"
+msgstr "ویرایش با المنتور"
+
+msgid "Export"
+msgstr "خروجی"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "No Figma templates imported yet."
+msgstr "هنوز قالبی وارد نشده است."
+
+msgid "Global Colors Sync"
+msgstr "همگام‌سازی رنگ‌های سراسری"
+
+msgid "Sync Colors"
+msgstr "همگام‌سازی رنگ‌ها"
+
+msgid "Global Typography Sync"
+msgstr "همگام‌سازی تایپوگرافی سراسری"
+
+msgid "Sync Typography"
+msgstr "همگام‌سازی تایپوگرافی"
+
+msgid "Sync All Styles"
+msgstr "همگام‌سازی همه استایل‌ها"
+
+msgid "Settings saved successfully."
+msgstr "تنظیمات با موفقیت ذخیره شد."
+
+msgid "Security check failed."
+msgstr "بررسی امنیتی ناموفق بود."
+
+msgid "Figma Personal Access Token"
+msgstr "توکن دسترسی شخصی فیگما"
+
+msgid "Default Figma File Key"
+msgstr "کلید فایل پیش‌فرض فیگما"
+
+msgid "Save Settings"
+msgstr "ذخیره تنظیمات"
+
+msgid "Figma Container"
+msgstr "کانتینر فیگما"
+
+msgid "Figma Button"
+msgstr "دکمه فیگما"
+
+msgid "Figma Image"
+msgstr "تصویر فیگما"
+
+msgid "Figma Heading"
+msgstr "عنوان فیگما"
+
+msgid "Figma Icon Box"
+msgstr "جعبه آیکون فیگما"
+
+msgid "Figma Section"
+msgstr "بخش فیگما"
+
+msgid "Figma Field"
+msgstr "فیلد فیگما"
+
+msgid "Figma Text Style"
+msgstr "استایل متن فیگما"

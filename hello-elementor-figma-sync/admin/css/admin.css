@@ -1,0 +1,239 @@
+.hello-figma-dashboard .hello-figma-status-cards,
+.hello-figma-style-sync .hello-figma-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.hello-figma-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    flex: 1;
+    min-width: 250px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.hello-figma-card h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #1e1e1e;
+}
+
+.hello-figma-card .card-stat {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2271b1;
+    margin: 10px 0;
+}
+
+.hello-figma-card .status-connected {
+    color: #00a32a;
+    font-weight: 600;
+}
+
+.hello-figma-card .status-disconnected {
+    color: #d63638;
+    font-weight: 600;
+}
+
+/* ── Step Sections ── */
+
+.hello-figma-step {
+    margin-top: 20px;
+}
+
+.hello-figma-step .hello-figma-card h2 {
+    margin-top: 0;
+}
+
+.hello-figma-loading {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.hello-figma-error .notice {
+    margin: 0;
+}
+
+/* ── Frame Grid ── */
+
+.figma-canvas-section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.figma-canvas-title {
+    font-size: 16px;
+    margin: 0 0 4px 0;
+    color: #1e1e1e;
+}
+
+.figma-canvas-frames-count {
+    font-size: 12px;
+    color: #999;
+    margin: 0 0 12px 0;
+}
+
+.figma-frame-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.figma-frame-card {
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fafafa;
+    transition: box-shadow 0.2s;
+}
+
+.figma-frame-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.figma-frame-preview {
+    width: 100%;
+    height: 160px;
+    background: #f0f0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.figma-frame-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.figma-frame-placeholder {
+    text-align: center;
+    color: #999;
+}
+
+.figma-frame-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.figma-frame-loading {
+    font-size: 11px;
+}
+
+.figma-frame-info {
+    padding: 10px;
+}
+
+.figma-frame-name {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.figma-frame-meta {
+    display: block;
+    font-size: 11px;
+    color: #999;
+}
+
+.figma-import-btn {
+    width: 100%;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+}
+
+/* ── Recent Imports ── */
+
+.hello-figma-recent {
+    margin-top: 30px;
+}
+
+.hello-figma-recent table {
+    margin-top: 10px;
+}
+
+.hello-figma-recent .actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* ── Style Sync ── */
+
+#hello-figma-convert-progress,
+#hello-figma-sync-result {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+#hello-figma-convert-progress {
+    background: #f0f6fc;
+    border: 1px solid #c5d9ed;
+}
+
+#hello-figma-sync-result.success {
+    background: #edfaef;
+    border: 1px solid #68de7c;
+}
+
+#hello-figma-sync-result.error {
+    background: #fcf0f1;
+    border: 1px solid #d63638;
+}
+
+/* ── Settings ── */
+
+.hello-figma-settings .form-table th {
+    width: 200px;
+}
+
+.hello-figma-help ol {
+    margin-left: 20px;
+}
+
+.hello-figma-help code {
+    display: block;
+    padding: 10px 15px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+/* ── Style Sync Tab ── */
+
+.hello-figma-sync-tab {
+    padding: 20px;
+}
+
+.hello-figma-sync-tab h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.hello-figma-sync-tab hr {
+    margin: 30px 0;
+}
+
+/* ── Templates ── */
+
+.hello-figma-templates .actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
