@@ -7,20 +7,21 @@
 [![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue?logo=wordpress)](https://wordpress.org)
 [![Elementor](https://img.shields.io/badge/Elementor-3.27%2B-92003B?logo=elementor)](https://elementor.com)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4?logo=php)](https://php.net)
-[![License](https://img.shields.io/badge/license-GPLv3-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv2%2B-green)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/Hordekiller/FigmaToelementor)](https://github.com/Hordekiller/FigmaToelementor/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Hordekiller/FigmaToelementor/pulls)
 
 **Stop rebuilding designs from scratch. Import them directly.**
 
 </div>
 
+---
+
 ## Overview
 
 Figma to Elementor bridges the gap between design and development. It fetches your Figma frames via the REST API, translates every visual property — colors, typography, spacing, borders, shadows, gradients — into native Elementor JSON, and saves them as editable Elementor templates.
 
-No manual duplication. No pixel-guessing. Just design → publish.
-
-### How It Works
+No manual duplication. No pixel-guessing. Just **design → publish**.
 
 ```
 1. Paste a Figma URL        →  Auto-extracts the file key
@@ -35,17 +36,18 @@ No manual duplication. No pixel-guessing. Just design → publish.
 
 | Feature | Description |
 |---|---|
-| **One-click Import** | Paste any Figma URL — the plugin extracts the file key automatically |
-| **Frame Browser** | See all frames in your file with live previews before importing |
-| **Full Style Mapping** | Colors, typography, borders, gradients, shadows, opacity — all converted |
-| **Component Breakdown** | Each section (header, hero, footer, etc.) becomes an independent Elementor container |
-| **Container-native** | Built for Elementor Flexbox Containers — not outdated sections |
-| **Typography Preserved** | Font family, size, weight, line height, letter spacing, transforms |
+| **One-click Import** | Paste any Figma URL — file key extracted automatically |
+| **Frame Browser** | Browse frames with live preview thumbnails |
+| **Component Breakdown** | Each section (header, hero, footer) → independent Elementor container |
+| **Full Style Mapping** | Colors, borders, gradients, shadows, opacity — all preserved |
+| **Typography** | Font family, size, weight, line height, letter spacing, transforms |
+| **Container-native** | Built for Elementor Flexbox Containers |
 | **Gradient Support** | Linear gradients with accurate color stops |
 | **Image Mapping** | Background images from Figma fills |
-| **Style Sync** | Sync Figma color styles and typography to Elementor Global Colors/Fonts |
-| **Editor Integration** | Import directly inside the Elementor editor via `$e.run()` commands |
-| **Persian Support** | Full Persian (Farsi) localization included |
+| **Style Sync** | Figma colors/typography → Elementor Global Colors/Fonts |
+| **Editor Integration** | Import via `$e.run()` inside Elementor editor |
+| **URL Parsing** | Full Figma URLs accepted — no need to extract file key manually |
+| **RTL Support** | Full Persian (Farsi) localization included |
 
 ---
 
@@ -53,11 +55,11 @@ No manual duplication. No pixel-guessing. Just design → publish.
 
 | Requirement | Version |
 |---|---|
-| WordPress | 6.6 or higher |
-| PHP | 8.0 or higher |
-| Elementor | 3.27 or higher (Free) |
-| Elementor Pro | 3.27 or higher (Recommended) |
-| Figma Account | Any plan (PAT required for API access) |
+| WordPress | 6.6+ |
+| PHP | 8.0+ |
+| Elementor | 3.27+ (Free) |
+| Elementor Pro | 3.27+ (Recommended) |
+| Figma | Any plan (PAT required) |
 
 ---
 
@@ -67,59 +69,51 @@ No manual duplication. No pixel-guessing. Just design → publish.
 
 1. Go to **Settings → Account → Personal Access Tokens** in Figma
 2. Click **Generate new token**
-3. Give it a name (e.g., `Elementor Sync`) and copy the token
+3. Name it (e.g., `Elementor Sync`) and copy the token
 
 ### 2. Install the Plugin
 
 **Option A: WordPress Dashboard**
-1. Download the latest release from [Releases](https://github.com/Hordekiller/FigmaToelementor/releases)
-2. Go to **Plugins → Add New → Upload Plugin** in WordPress
-3. Upload the zip and activate
+1. Download from [Releases](https://github.com/Hordekiller/FigmaToelementor/releases)
+2. **Plugins → Add New → Upload Plugin** → upload zip → activate
 
-**Option B: Manual**
+**Option B: CLI**
 ```bash
 cd wp-content/plugins/
 git clone https://github.com/Hordekiller/FigmaToelementor.git hello-elementor-figma-sync
 ```
-Then activate from **Plugins** in WordPress.
+Activate from **Plugins** in WordPress admin.
 
 ### 3. Configure
 
 1. Go to **Figma Sync → Settings**
-2. Paste your Figma Personal Access Token
-3. Save
+2. Paste your Figma PAT → **Save**
 
 ### 4. Import Your First Design
 
 1. Go to **Figma Sync → Dashboard**
-2. Paste a Figma URL (e.g., `https://www.figma.com/file/abc123/MyDesign`)
+2. Paste a Figma URL like `https://www.figma.com/file/abc123/MyDesign`
 3. Click **Load Frames**
-4. Select a frame and click **Import**
-5. Click **Edit with Elementor** to tweak the result
+4. Select a frame → **Import**
+5. **Edit with Elementor** to refine the result
 
 ---
 
 ## Quick Start (Developer)
 
 ```php
-// Get the renderer service
 $renderer = HelloFigma\Plugin::instance()->get_renderer();
+$template = $renderer->convert_file('file-key', 'node-id');
 
-// Convert a Figma file to Elementor JSON
-$template = $renderer->convert_file('your-file-key', 'node-id-here');
-
-// Save as an Elementor template
 $manager = HelloFigma\Plugin::instance()->get_template_manager();
-$post_id = $manager->save_template($template, 'My Import', 'your-file-key');
+$post_id = $manager->save_template($template, 'My Import', 'file-key');
 ```
 
-Or directly inside the Elementor editor (browser console):
+In Elementor editor (browser console):
 
 ```js
-// Fetch and insert via AJAX
 await helloFigmaEditor.importFromFigma('file-key', 'node-id');
 
-// Or pass JSON directly
 $e.run('hello-figma/import-template', {
     template: { title: 'Hero', content: [{ elType: 'container', ... }] }
 });
@@ -131,68 +125,55 @@ $e.run('hello-figma/import-template', {
 
 ```
 FigmaToelementor/
-├── admin/                    # Admin UI
-│   ├── css/admin.css         # Dashboard styles
-│   ├── js/admin.js           # Dashboard frontend
-│   ├── js/editor.js          # Elementor editor integration
-│   └── views/                # PHP templates
-│       ├── dashboard.php
-│       ├── settings.php
-│       ├── style-sync.php
-│       └── templates.php
-├── dynamic-tags/             # Elementor dynamic tags
-│   ├── class-figma-field.php
-│   └── class-figma-text.php
-├── includes/                 # Core plugin logic
-│   ├── class-admin.php       # Admin AJAX handlers
+├── admin/                     # Dashboard UI
+│   ├── css/admin.css
+│   ├── js/admin.js
+│   ├── js/editor.js           # Elementor editor integration
+│   └── views/                 # PHP templates
+├── dynamic-tags/              # Elementor dynamic tags
+├── includes/                  # Core engine
+│   ├── class-elementor-renderer.php   # Figma → Elementor converter
+│   ├── class-figma-api.php            # Figma REST client
+│   ├── class-template-manager.php     # Template CRUD
+│   ├── class-style-sync.php           # Global style sync
+│   ├── class-admin.php                # AJAX handlers
 │   ├── class-asset-manager.php
 │   ├── class-compatibility.php
-│   ├── class-elementor-renderer.php  # Figma → Elementor conversion engine
-│   ├── class-figma-api.php   # Figma REST API client
 │   ├── class-image-handler.php
-│   ├── class-plugin.php      # Plugin bootstrap
-│   ├── class-style-sync.php  # Figma style → Elementor globals
-│   └── class-template-manager.php
-├── languages/                # Translations
-│   └── hello-figma-fa_IR.po
-├── widgets/                  # Custom Elementor widgets
-│   ├── class-figma-button.php
-│   ├── class-figma-container.php
-│   ├── class-figma-heading.php
-│   ├── class-figma-icon-box.php
-│   ├── class-figma-image.php
-│   └── class-figma-section.php
-├── hello-elementor-figma-sync.php   # Plugin entry point
-├── readme.txt                # WordPress plugin readme
-└── README.md                 # This file
+│   └── class-plugin.php               # Bootstrap
+├── widgets/                   # Custom Elementor widgets
+├── languages/                 # Translations
+├── .github/CONTRIBUTING.md    # Contribution guide
+├── hello-elementor-figma-sync.php     # Entry point
+├── LICENSE
+├── README.md
+└── readme.txt                 # WordPress plugin readme
 ```
 
 ---
 
 ## Architecture
 
-The plugin follows a service-oriented architecture:
-
 ```
 ┌─────────────────────┐
-│   Figma REST API    │  ◄── Figma_API (HTTP client with caching)
+│   Figma REST API    │  ◄── Figma_API (HTTP + caching)
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│ Elementor_Renderer  │  ◄── Converts Figma node tree → Elementor JSON
-│  - Node mapping     │       (elType, widgetType, settings, elements)
+│ Elementor_Renderer  │  ◄── Figma node tree → Elementor JSON
+│  - Node mapping     │       (elType, widgetType, settings)
 │  - Style extraction │
 │  - Template wrapper │
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│ Template_Manager    │  ◄── Saves to wp_posts as elementor_library
-│  - CRUD operations  │
+│ Template_Manager    │  ◄── wp_posts as elementor_library
+│  - CRUD             │
 │  - Export/Import    │
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│  Elementor Editor   │  ◄── Opens the template for editing
+│  Elementor Editor   │  ◄── Edit & publish
 └─────────────────────┘
 ```
 
@@ -200,68 +181,42 @@ The plugin follows a service-oriented architecture:
 
 ## Contributing
 
-**All development happens on this repository.** We do not allow separate distributions, rebranded versions, or standalone forks. If you want to extend the plugin, do it here — submit a Pull Request so everyone benefits.
+**All development happens on this repository.** No separate distributions, rebranded forks, or standalone versions. Contribute here so everyone benefits.
 
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the full guide.
-
-### Quick Start
+Read [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the full guide.
 
 ```bash
 git clone https://github.com/Hordekiller/FigmaToelementor.git
 cd FigmaToelementor
 git checkout -b feature/your-feature
-# Make your changes, then:
-git commit -m "feat: describe your change"
-git push origin feature/your-feature
-# Open a Pull Request
+# code → commit → push → PR
 ```
-
-### Development Setup
-
-```bash
-# Symlink into your WordPress plugins directory
-ln -s $(pwd) /path/to/wp-content/plugins/hello-elementor-figma-sync
-```
-
-### Contributors
-
-<a href="https://github.com/Hordekiller/FigmaToelementor/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Hordekiller/FigmaToelementor" />
-</a>
 
 ---
 
 ## License
 
-**GNU General Public License v2.0 or later** — see [LICENSE](LICENSE) for details.
+**GNU General Public License v2.0 or later** — see [LICENSE](LICENSE).
 
-This license ensures that:
-- ✅ You may **use** the plugin on any WordPress site
-- ✅ You may **modify** the code for your own needs
-- ✅ You may **share** copies with the GPL license included
-- ❌ You may **NOT** distribute modified versions without source code
-- ❌ You may **NOT** incorporate it into proprietary software
-- ❌ You may **NOT** create standalone forks or rebranded versions
+| ✅ You may | ❌ You may NOT |
+|---|---|
+| Use on any WordPress site | Distribute without source code |
+| Modify for your own needs | Incorporate into proprietary software |
+| Share copies with license | Create standalone forks or rebranded versions |
 
-All contributors retain copyright of their contributions, which are licensed under the same GPLv2+ terms.
+All contributions are licensed under the same GPLv2+ terms. Copyright 2026.
 
 ---
 
 ## Roadmap
 
-- [ ] **Figma Variables Support** — Import design tokens as CSS custom properties
-- [ ] **Auto-layout → Elementor Flexbox** — Better Figma Auto Layout mapping
-- [ ] **Component Library** — Create reusable Elementor components from Figma components
-- [ ] **Two-way Sync** — Push Elementor changes back to Figma
-- [ ] **Batch Import** — Import multiple frames at once
-- [ ] **Responsive Breakpoints** — Figma variants → Elementor responsive settings
-- [ ] **Plugin Store** — Publish on WordPress Plugin Directory
-
----
-
-## License
-
-GNU General Public License v3.0 — see [LICENSE](LICENSE) for details.
+- [ ] Figma Variables → CSS custom properties
+- [ ] Auto-layout → Elementor Flexbox (improved)
+- [ ] Component Library from Figma components
+- [ ] Two-way sync (Elementor → Figma)
+- [ ] Batch import multiple frames
+- [ ] Responsive breakpoints from Figma variants
+- [ ] WordPress Plugin Directory release
 
 ---
 
