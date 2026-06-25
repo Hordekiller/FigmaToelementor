@@ -4,7 +4,7 @@ Tags: figma, elementor, hello-elementor, figma to elementor, template converter,
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 Copyright: 2026 Hordekiller
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,13 @@ Yes. All imported templates are fully editable in Elementor — every widget, st
 Yes. Full RTL support with Persian translation included.
 
 == Changelog ==
+
+= 1.1.0 =
+* New: Component detection from layer names — 18 patterns (English + Persian)
+* New: CSS class auto-tagging based on detected component type (figma-detected-{type})
+* New: Slider/Carousel structural conversion — auto-converts to Elementor Image Carousel widget
+* Enhancement: Conservative detection algorithm (≥70% image fill threshold for carousel)
+* Enhancement: Depth-limited recursive image search for nested Figma groups
 
 = 1.0.1 =
 * Security: Token no longer exposed in HTML source on settings page
