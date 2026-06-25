@@ -69,6 +69,18 @@ Yes. Full RTL support with Persian translation included.
 
 == Changelog ==
 
+= 1.0.1 =
+* Security: Token no longer exposed in HTML source on settings page
+* Security: Added token validation test on settings save
+* Enhancement: Retry-After header handling for Figma API rate limits
+* Enhancement: Rate limit budget tracking via X-RateLimit-Remaining headers
+* Enhancement: Token expiry notification (90-day PAT policy)
+* Enhancement: Clear Figma cache button in settings
+* Enhancement: Connection status indicator on settings page
+* Enhancement: Improved Auto Layout mapping (row_gap vs column_gap)
+* Enhancement: Added PHPCS and PHPStan configuration files
+* Enhancement: Added GitHub Actions CI workflow
+
 = 1.0.0 =
 * Initial release
 * One-click Figma to Elementor conversion

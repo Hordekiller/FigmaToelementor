@@ -88,6 +88,22 @@ class Admin {
     }
 
     public function handle_form_submissions(): void {
+        // Handle clear cache
+        if (isset($_POST['hello_figma_clear_cache'])) {
+            if (!wp_verify_nonce($_POST['_figma_cache_nonce'] ?? '', 'hello_figma_clear_cache')) {
+                wp_die(__('Security check failed.', 'hello-figma'));
+            }
+
+            $this->plugin->get_figma_api()->clear_cache();
+
+            add_action('admin_notices', function (): void {
+                echo '<div class="notice notice-success is-dismissible"><p>' .
+                    esc_html__('Figma cache cleared successfully.', 'hello-figma') .
+                    '</p></div>';
+            });
+            return;
+        }
+
         if (!isset($_POST['hello_figma_save_settings'])) {
             return;
         }
@@ -97,7 +113,7 @@ class Admin {
         }
 
         $pat = sanitize_text_field($_POST['figma_pat'] ?? '');
-        if (!empty($pat)) {
+        if (!empty($pat) && $pat !== '********') {
             $this->plugin->get_figma_api()->set_token($pat);
         }
 
@@ -106,10 +122,17 @@ class Admin {
             update_option('hello_figma_file_key', $file_key);
         }
 
-        add_action('admin_notices', function (): void {
-            echo '<div class="notice notice-success is-dismissible"><p>' .
-                esc_html__('Settings saved successfully.', 'hello-figma') .
-                '</p></div>';
+        $messages = [__('Settings saved successfully.', 'hello-figma')];
+
+        // Validate token if set
+        if ($this->plugin->get_figma_api()->has_token() && !$this->plugin->get_figma_api()->test_token()) {
+            $messages[] = __('Warning: Figma token appears invalid. Please verify it.', 'hello-figma');
+        }
+
+        add_action('admin_notices', function () use ($messages): void {
+            foreach ($messages as $message) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($message) . '</p></div>';
+            }
         });
     }
 

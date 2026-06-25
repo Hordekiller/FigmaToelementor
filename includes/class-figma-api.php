@@ -20,6 +20,11 @@ class Figma_API {
     public function set_token(string $token): void {
         $this->token = $token;
         update_option(self::TOKEN_OPTION, $token);
+
+        // Track token creation for expiry notices (90-day PAT policy)
+        if (!get_option('hello_figma_token_created_at', 0)) {
+            update_option('hello_figma_token_created_at', time());
+        }
     }
 
     public function get_token(): string {
@@ -242,6 +247,18 @@ class Figma_API {
             'endpoint' => $endpoint,
         ]);
 
+        if ($code === 429) {
+            $retry_after = (int) wp_remote_retrieve_header($response, 'Retry-After');
+            if ($retry_after > 0 && $retry_after <= 60) {
+                Logger::log('WARNING', 'FigmaAPI', 'Rate limited — retrying after delay', [
+                    'retry_after' => $retry_after,
+                    'endpoint' => $endpoint,
+                ]);
+                sleep($retry_after);
+                return $this->request($endpoint);
+            }
+        }
+
         if ($code !== 200) {
             $error_message = sprintf(
                 'Figma API error [%d]: %s',
@@ -268,6 +285,8 @@ class Figma_API {
             return null;
         }
 
+        $this->update_rate_budget($response, $endpoint);
+
         return $data;
     }
 
@@ -283,6 +302,81 @@ class Figma_API {
             }
         }
         set_transient(self::RATE_LIMIT_KEY, (string) microtime(true), 10);
+
+        // Respect X-RateLimit-Remaining header if present
+        $remaining_requests = get_transient('hello_figma_rate_remaining');
+        if ($remaining_requests !== false && (int) $remaining_requests <= 2) {
+            usleep(500_000);
+        }
+    }
+
+    /**
+     * Update rate limit budget based on response headers.
+     */
+    private function update_rate_budget(array $response, string $endpoint): void {
+        $remaining = wp_remote_retrieve_header($response, 'X-RateLimit-Remaining');
+        if ($remaining !== '') {
+            set_transient('hello_figma_rate_remaining', (int) $remaining, 60);
+            Logger::log('DEBUG', 'FigmaAPI', 'Rate limit budget updated', [
+                'remaining' => $remaining,
+                'endpoint' => $endpoint,
+            ]);
+        }
+    }
+
+    /**
+     * Test if the current token is valid by calling the /me endpoint.
+     *
+     * @return bool True if token is valid
+     */
+    public function test_token(): bool {
+        if (empty($this->token)) {
+            return false;
+        }
+
+        $response = wp_remote_get(self::API_BASE . 'me', [
+            'headers' => [
+                'X-Figma-Token' => $this->token,
+            ],
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        return wp_remote_retrieve_response_code($response) === 200;
+    }
+
+    /**
+     * Get remaining token expiry notice (approximate from PAT format).
+     *
+     * @return string|null Human-readable expiry info or null if unknown
+     */
+    public function get_token_expiry_info(): ?string {
+        if (empty($this->token)) {
+            return null;
+        }
+
+        // Figma PATs generated after Nov 2025 expire in 90 days.
+        // We store the creation date when the token is first set.
+        $created_at = get_option('hello_figma_token_created_at', 0);
+        if ($created_at === 0) {
+            return null;
+        }
+
+        $expires_at = $created_at + 90 * DAY_IN_SECONDS;
+        $remaining = $expires_at - time();
+
+        if ($remaining <= 0) {
+            return __('Token has expired. Please generate a new one.', 'hello-figma');
+        }
+
+        return sprintf(
+            /* translators: %d: number of days */
+            __('Token expires in %d days.', 'hello-figma'),
+            (int) ceil($remaining / DAY_IN_SECONDS)
+        );
     }
 
     /**

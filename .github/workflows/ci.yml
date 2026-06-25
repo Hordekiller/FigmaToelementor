@@ -1,0 +1,43 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    phpcs:
+        name: PHP CodeSniffer
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.1'
+                  tools: phpcs
+
+            - name: Install WordPress Coding Standards
+              run: |
+                  composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+                  composer global require wp-coding-standards/wpcs
+
+            - name: Run PHPCS
+              run: phpcs --standard=phpcs.xml
+
+    phpstan:
+        name: PHPStan
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.1'
+                  tools: phpstan
+
+            - name: Run PHPStan
+              run: phpstan analyse --configuration=phpstan.neon --no-progress

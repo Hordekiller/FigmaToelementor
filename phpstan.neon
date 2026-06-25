@@ -1,0 +1,19 @@
+parameters:
+    level: 6
+    paths:
+        - includes/
+        - widgets/
+        - dynamic-tags/
+        - admin/
+        - hello-elementor-figma-sync.php
+    excludePaths:
+        - languages/
+    bootstrapFiles:
+        - %rootDir%/../../phpstan/wordpress/bootstrap.php
+    checkMissingIterableValueType: false
+    reportUnmatchedIgnoredErrors: true
+    ignoreErrors:
+        - '#Call to an undefined method .+::#'
+        - '#Constant .+ not found.#'
+    scanFiles:
+        - %rootDir%/../../phpstan/wordpress/constants.php

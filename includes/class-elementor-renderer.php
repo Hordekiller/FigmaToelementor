@@ -435,13 +435,13 @@ class Elementor_Renderer {
             $settings->flex_wrap = 'wrap';
         }
 
-        // Padding
+        // Padding — extracted regardless of auto-layout
         $pL = $node['paddingLeft'] ?? $node['padding'] ?? null;
         $pR = $node['paddingRight'] ?? $node['padding'] ?? null;
         $pT = $node['paddingTop'] ?? $node['padding'] ?? null;
         $pB = $node['paddingBottom'] ?? $node['padding'] ?? null;
 
-        if ($pT !== null) {
+        if ($pT !== null && $pR !== null && $pB !== null && $pL !== null) {
             $settings->padding = (object) [
                 'unit' => 'px',
                 'top' => (int) $pT, 'right' => (int) $pR,
@@ -450,15 +450,28 @@ class Elementor_Renderer {
             ];
         }
 
-        // Gap
+        // Gap — map itemSpacing to column_gap (row) or row_gap (column) depending on direction
         $gap = $node['itemSpacing'] ?? null;
         if ($gap !== null) {
-            $settings->column_gap = (object) ['unit' => 'px', 'size' => (int) $gap];
+            $is_row = ($layout === 'HORIZONTAL');
+            if ($is_row) {
+                $settings->column_gap = (object) ['unit' => 'px', 'size' => (int) $gap];
+            } else {
+                $settings->row_gap = (object) ['unit' => 'px', 'size' => (int) $gap];
+            }
         }
 
         // Alignment
         $settings->flex_justify_content = $this->map_align($node['primaryAxisAlignItems'] ?? 'MIN');
         $settings->flex_align_items = $this->map_align($node['counterAxisAlignItems'] ?? 'MIN');
+
+        // Sizing modes — map to Elementor's grow/shrink when applicable
+        $primary_sizing = $node['primaryAxisSizingMode'] ?? null;
+        $counter_sizing = $node['counterAxisSizingMode'] ?? null;
+
+        if ($primary_sizing === 'FIXED') {
+            $settings->flex_grow = '0';
+        }
     }
 
     private function extract_container_dimensions(array $node, \stdClass $settings): void {

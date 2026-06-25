@@ -9,6 +9,7 @@
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4?logo=php)](https://php.net)
 [![License](https://img.shields.io/badge/license-GPLv2%2B-green)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/Hordekiller/FigmaToelementor)](https://github.com/Hordekiller/FigmaToelementor/releases)
+[![CI](https://github.com/Hordekiller/FigmaToelementor/actions/workflows/ci.yml/badge.svg)](https://github.com/Hordekiller/FigmaToelementor/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Hordekiller/FigmaToelementor/pulls)
 
 **Stop rebuilding designs from scratch. Import them directly.**
@@ -140,10 +141,16 @@ FigmaToelementor/
 │   ├── class-asset-manager.php
 │   ├── class-compatibility.php
 │   ├── class-image-handler.php
+│   ├── class-logger.php               # Structured logging
 │   └── class-plugin.php               # Bootstrap
 ├── widgets/                   # Custom Elementor widgets
-├── languages/                 # Translations
-├── .github/CONTRIBUTING.md    # Contribution guide
+├── dynamic-tags/              # Elementor Pro dynamic tags
+├── languages/                 # Persian (Farsi) translation
+├── .github/
+│   ├── CONTRIBUTING.md        # Contribution guide
+│   └── workflows/ci.yml       # GitHub Actions (PHPCS + PHPStan)
+├── phpcs.xml                  # PHP CodeSniffer config
+├── phpstan.neon               # PHPStan static analysis config
 ├── hello-elementor-figma-sync.php     # Entry point
 ├── LICENSE
 ├── README.md
@@ -210,8 +217,18 @@ All contributions are licensed under the same GPLv2+ terms. Copyright 2026.
 
 ## Roadmap
 
+### ✅ Completed (v1.0.1)
+- [x] **Token security** — PAT no longer leaked in HTML source
+- [x] **Rate limit handling** — Retry-After support for 429 responses
+- [x] **Token expiry notices** — 90-day Figma PAT policy notifications
+- [x] **Clear cache UI** — Button in settings to flush Figma API transients
+- [x] **Connection status** — Token validation indicator on settings page
+- [x] **Auto-layout improvements** — Correct column_gap/row_gap mapping
+- [x] **CI pipeline** — GitHub Actions with PHPCS + PHPStan
+
+### 🔜 Up Next
 - [ ] Figma Variables → CSS custom properties
-- [ ] Auto-layout → Elementor Flexbox (improved)
+- [ ] Figma Variables sync to Elementor Global Colors
 - [ ] Component Library from Figma components
 - [ ] Two-way sync (Elementor → Figma)
 - [ ] Batch import multiple frames
