@@ -186,6 +186,21 @@ class Elementor_Renderer {
         }
 
         $figma_type = $node['type'] ?? '';
+
+        // ── Component-type detection from layer name ──
+        $component_type = Component_Detector::detect($node['name'] ?? '');
+
+        // ── Slider / Carousel: attempt structural conversion ──
+        if ($component_type !== null && in_array($component_type, ['slider', 'carousel'], true)) {
+            $container_types = ['FRAME', 'GROUP', 'COMPONENT', 'INSTANCE'];
+            if (in_array($figma_type, $container_types, true)) {
+                $carousel_element = $this->try_build_carousel($node, $component_type);
+                if ($carousel_element !== null) {
+                    return $carousel_element;
+                }
+            }
+        }
+
         [$elType, $widgetType] = $this->resolve_type($node);
 
         Logger::log('INFO', 'ElementorRenderer', 'Converting node', [
@@ -193,6 +208,7 @@ class Elementor_Renderer {
             'resolved_elType' => $elType,
             'resolved_widgetType' => $widgetType,
             'name' => $node['name'] ?? null,
+            'component_type' => $component_type,
         ]);
 
         $element = [
@@ -209,6 +225,12 @@ class Elementor_Renderer {
 
         // Populate settings based on element type
         $element['settings'] = $this->extract_settings($node, $elType, $widgetType);
+
+        // ── CSS class tagging for all detected component types ──
+        if ($component_type !== null) {
+            $existing_classes = $element['settings']->_css_classes ?? '';
+            $element['settings']->_css_classes = trim($existing_classes . ' figma-detected-' . $component_type);
+        }
 
         // Recursively convert children
         foreach ($node['children'] ?? [] as $child) {
@@ -617,6 +639,110 @@ class Elementor_Renderer {
         if (!empty($fills) && ($fills[0]['type'] ?? '') === 'SOLID') {
             $settings->primary_color = $this->rgba_to_hex($fills[0]['color'] ?? []);
         }
+    }
+
+    // ── Slider / Carousel Conversion ──
+
+    /**
+     * Attempt to build an Elementor Image Carousel widget from a node.
+     *
+     * Conditions (both must hold):
+     *   1. Node has at least 2 direct children.
+     *   2. At least 70% of direct children have a visible IMAGE fill
+     *      (either on themselves or within one level of descendants).
+     *
+     * If conditions are not met, returns null (caller should fall through
+     * to normal generic conversion).
+     *
+     * @return array|null A carousel widget element, or null.
+     */
+    private function try_build_carousel(array $node, string $component_type): ?array {
+        $children = $node['children'] ?? [];
+        $total = count($children);
+
+        if ($total < 2) {
+            return null;
+        }
+
+        // Find which children have an image fill within 1 sub-level
+        $image_node_ids = [];
+        foreach ($children as $child) {
+            $img_node = $this->find_image_in_subtree($child, 1);
+            if ($img_node !== null) {
+                $image_node_ids[] = $img_node['id'] ?? '';
+            }
+        }
+
+        $image_count = count($image_node_ids);
+        $ratio = $image_count / $total;
+
+        if ($ratio < 0.7) {
+            return null;
+        }
+
+        // Build the carousel slides array reusing the same image-settings logic
+        // that extract_image_settings() uses, so placeholder format stays consistent
+        // with the rest of the pipeline.
+        $slides = [];
+        foreach ($children as $child) {
+            $img_node = $this->find_image_in_subtree($child, 1);
+            if ($img_node === null) {
+                continue;
+            }
+            $img_settings = new \stdClass();
+            $this->extract_image_settings($img_node, $img_settings);
+            if (isset($img_settings->image)) {
+                $slides[] = $img_settings->image;
+            }
+        }
+
+        if (empty($slides)) {
+            return null;
+        }
+
+        $carousel_settings = new \stdClass();
+        $carousel_settings->carousel = $slides;
+        $carousel_settings->slides_to_show = '3';
+        $carousel_settings->navigation = 'both';
+        $carousel_settings->_css_classes = 'figma-detected-' . $component_type;
+
+        return [
+            'id' => $this->generate_id(),
+            'elType' => 'widget',
+            'widgetType' => 'image-carousel',
+            'isInner' => false,
+            'settings' => $carousel_settings,
+            'elements' => [],
+        ];
+    }
+
+    /**
+     * Find the first node with a visible IMAGE fill within $max_depth levels.
+     *
+     * Depth 0 = check $node itself.
+     * Depth 1 = also check direct children of $node.
+     *
+     * @return array|null The raw Figma node array, or null if not found.
+     */
+    private function find_image_in_subtree(array $node, int $max_depth = 1): ?array {
+        $fill = $this->get_visible_fill($node);
+        if ($fill !== null && ($fill['type'] ?? '') === 'IMAGE') {
+            $figma_type = $node['type'] ?? '';
+            if (in_array($figma_type, ['RECTANGLE', 'ELLIPSE'], true)) {
+                return $node;
+            }
+        }
+
+        if ($max_depth > 0) {
+            foreach ($node['children'] ?? [] as $child) {
+                $found = $this->find_image_in_subtree($child, $max_depth - 1);
+                if ($found !== null) {
+                    return $found;
+                }
+            }
+        }
+
+        return null;
     }
 
     // ── Template Wrapper ──
