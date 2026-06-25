@@ -131,8 +131,9 @@ class Elementor_Renderer {
         $frame_element = $this->convert_node($document);
         if ($frame_element !== null) {
             // Top-level sections are the frame's direct children
+            $frame_layout_mode = $document['layoutMode'] ?? null;
             foreach ($children as $child) {
-                $converted = $this->convert_node($child);
+                $converted = $this->convert_node($child, $frame_layout_mode);
                 if ($converted !== null) {
                     $content[] = $converted;
                 }
@@ -176,7 +177,7 @@ class Elementor_Renderer {
      *
      * @return array|null { id, elType, widgetType?, isInner, settings, elements }
      */
-    private function convert_node(array $node): ?array {
+    private function convert_node(array $node, ?string $parent_layout_mode = null): ?array {
         if (!$this->should_render($node)) {
             Logger::log('INFO', 'ElementorRenderer', 'Skipping non-visible node', [
                 'figma_type' => $node['type'] ?? null,
@@ -226,15 +227,21 @@ class Elementor_Renderer {
         // Populate settings based on element type
         $element['settings'] = $this->extract_settings($node, $elType, $widgetType);
 
+        // ── Flex child sizing for children of auto-layout parents ──
+        if ($parent_layout_mode !== null && $elType === 'container') {
+            $this->extract_flex_child_sizing($node, $element['settings'], $parent_layout_mode);
+        }
+
         // ── CSS class tagging for all detected component types ──
         if ($component_type !== null) {
             $existing_classes = $element['settings']->_css_classes ?? '';
             $element['settings']->_css_classes = trim($existing_classes . ' figma-detected-' . $component_type);
         }
 
-        // Recursively convert children
+        // Recursively convert children (pass this node's layoutMode for their sizing)
+        $node_layout_mode = $node['layoutMode'] ?? null;
         foreach ($node['children'] ?? [] as $child) {
-            $converted = $this->convert_node($child);
+            $converted = $this->convert_node($child, $node_layout_mode);
             if ($converted !== null) {
                 $element['elements'][] = $converted;
             }
@@ -281,6 +288,7 @@ class Elementor_Renderer {
         if ($elType === 'container') {
             $this->extract_container_layout($node, $settings);
             $this->extract_container_dimensions($node, $settings);
+            $this->extract_parent_sizing_mode($node, $settings);
         } elseif ($widgetType === 'heading') {
             $this->extract_heading_settings($node, $settings);
         } elseif ($widgetType === 'button') {
@@ -487,13 +495,8 @@ class Elementor_Renderer {
         $settings->flex_justify_content = $this->map_align($node['primaryAxisAlignItems'] ?? 'MIN');
         $settings->flex_align_items = $this->map_align($node['counterAxisAlignItems'] ?? 'MIN');
 
-        // Sizing modes — map to Elementor's grow/shrink when applicable
-        $primary_sizing = $node['primaryAxisSizingMode'] ?? null;
-        $counter_sizing = $node['counterAxisSizingMode'] ?? null;
-
-        if ($primary_sizing === 'FIXED') {
-            $settings->flex_grow = '0';
-        }
+        // Sizing modes for the PARENT container itself are handled
+        // in extract_parent_sizing_mode() called from extract_settings().
     }
 
     private function extract_container_dimensions(array $node, \stdClass $settings): void {
@@ -638,6 +641,140 @@ class Elementor_Renderer {
         $fills = $node['fills'] ?? [];
         if (!empty($fills) && ($fills[0]['type'] ?? '') === 'SOLID') {
             $settings->primary_color = $this->rgba_to_hex($fills[0]['color'] ?? []);
+        }
+    }
+
+    // ── Parent Sizing Mode (for auto-layout containers themselves) ──
+
+    /**
+     * Adjust the parent container's own width/min_height based on
+     * primaryAxisSizingMode / counterAxisSizingMode.
+     *
+     * When an auto-layout frame's primary axis is AUTO (= HUG), the
+     * container should NOT have an explicit width (row) or height (column)
+     * from absoluteBoundingBox — it should shrink-wrap its children instead.
+     */
+    private function extract_parent_sizing_mode(array $node, \stdClass $settings): void {
+        $layout_mode = $node['layoutMode'] ?? null;
+        if ($layout_mode === null || $layout_mode === 'NONE') {
+            return;
+        }
+
+        $is_row = ($layout_mode === 'HORIZONTAL');
+        $primary_mode  = $node['primaryAxisSizingMode'] ?? null;
+        $counter_mode  = $node['counterAxisSizingMode'] ?? null;
+
+        // Primary axis: AUTO = hug → remove explicit dimension
+        if ($primary_mode === 'AUTO') {
+            if ($is_row) {
+                unset($settings->width);
+            } else {
+                unset($settings->min_height);
+            }
+        }
+
+        // Counter axis: AUTO = hug → remove explicit dimension
+        if ($counter_mode === 'AUTO') {
+            if ($is_row) {
+                unset($settings->min_height);
+            } else {
+                unset($settings->width);
+            }
+        }
+    }
+
+    // ── Flex Child Sizing (for children of auto-layout parents) ──
+
+    /**
+     * Map Figma child sizing modes (FIXED / HUG / FILL) to Elementor
+     * flex-item controls (_flex_size, _flex_align_self).
+     *
+     * Called during convert_node() for every container that is a direct
+     * child of an auto-layout parent.
+     *
+     * Fallback: if layoutSizingHorizontal/Vertical are absent (older files),
+     *          uses layoutGrow: 1 → FILL primary, layoutAlign: 'STRETCH' → FILL counter.
+     *
+     * @param array    $node               The child Figma node
+     * @param \stdClass $settings           Elementor settings (mutated in place)
+     * @param string   $parent_layout_mode Parent's layoutMode ('HORIZONTAL' or 'VERTICAL')
+     */
+    private function extract_flex_child_sizing(array $node, \stdClass $settings, string $parent_layout_mode): void {
+        $is_row = ($parent_layout_mode === 'HORIZONTAL');
+
+        // ── Read sizing per axis ──
+        // Modern API (v5+): use layoutSizingHorizontal / layoutSizingVertical
+        $layout_h = $node['layoutSizingHorizontal'] ?? null;
+        $layout_v = $node['layoutSizingVertical'] ?? null;
+
+        // Legacy API fallback: derive from layoutGrow / layoutAlign
+        if ($layout_h === null && $layout_v === null) {
+            $layout_grow  = $node['layoutGrow'] ?? 0;
+            $layout_align = $node['layoutAlign'] ?? null;
+
+            if ($is_row) {
+                $layout_h = ($layout_grow === 1) ? 'FILL' : null;
+                $layout_v = ($layout_align === 'STRETCH') ? 'FILL' : null;
+            } else {
+                $layout_v = ($layout_grow === 1) ? 'FILL' : null;
+                $layout_h = ($layout_align === 'STRETCH') ? 'FILL' : null;
+            }
+
+            // For non-FILL cases in legacy mode, keep the explicit
+            // bounding-box dimensions already set by extract_container_dimensions
+            // (acts as FIXED).
+            if ($layout_h === null) {
+                $layout_h = 'FIXED';
+            }
+            if ($layout_v === null) {
+                $layout_v = 'FIXED';
+            }
+        }
+
+        // Primary axis = direction the parent flows (main axis)
+        $primary_sizing = $is_row ? $layout_h : $layout_v;
+        // Counter axis = cross-axis of parent
+        $counter_sizing = $is_row ? $layout_v : $layout_h;
+
+        // ── Primary axis (main axis of parent flex) ──
+        if ($primary_sizing === 'FILL') {
+            $settings->_flex_size = 'grow';
+            // Remove explicit dimension — flex-grow determines size
+            if ($is_row) {
+                unset($settings->width);
+            } else {
+                unset($settings->min_height);
+            }
+        } elseif ($primary_sizing === 'FIXED') {
+            $settings->_flex_size = 'none';
+            // Keep explicit dimension (already set by extract_container_dimensions)
+        } elseif ($primary_sizing === 'HUG') {
+            // No explicit dimension — size to content
+            if ($is_row) {
+                unset($settings->width);
+            } else {
+                unset($settings->min_height);
+            }
+        }
+
+        // ── Counter axis (cross axis of parent flex) ──
+        if ($counter_sizing === 'FILL') {
+            $settings->_flex_align_self = 'stretch';
+            if ($is_row) {
+                unset($settings->min_height);
+            } else {
+                unset($settings->width);
+            }
+        } elseif ($counter_sizing === 'FIXED') {
+            $settings->_flex_align_self = '';
+            // Keep explicit dimension
+        } elseif ($counter_sizing === 'HUG') {
+            $settings->_flex_align_self = '';
+            if ($is_row) {
+                unset($settings->min_height);
+            } else {
+                unset($settings->width);
+            }
         }
     }
 
