@@ -140,6 +140,9 @@ class Admin {
             wp_send_json_error(['message' => __('Failed to convert Figma file.', 'hello-figma')]);
         }
 
+        // Resolve figma-image:// placeholders to real WordPress attachments
+        $elementor_data = $this->plugin->get_image_handler()->resolve_image_placeholders($file_key, $elementor_data);
+
         // format=json: return raw template data (for JS API / editor.js)
         if ($format === 'json') {
             wp_send_json_success([

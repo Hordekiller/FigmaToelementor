@@ -83,6 +83,89 @@ class Image_Handler {
     }
 
     /**
+     * Walk converted Elementor data and resolve every "figma-image://{nodeId}"
+     * placeholder into a real WordPress attachment URL+ID.
+     *
+     * Images are downloaded from Figma via the images API and sideloaded into
+     * the WordPress media library. Duplicate nodeId references share one download.
+     *
+     * @return array The data with all placeholders replaced.
+     */
+    public function resolve_image_placeholders(string $file_key, array $data): array {
+        $node_ids = $this->collect_placeholder_ids($data);
+        if (empty($node_ids)) {
+            return $data;
+        }
+
+        $name_map = [];
+        foreach ($node_ids as $id) {
+            $name_map[$id] = $id;
+        }
+
+        $results = $this->batch_download_images($file_key, $name_map, 'png');
+
+        $resolved = [];
+        foreach ($results as $node_id => $attachment_id) {
+            if (is_wp_error($attachment_id)) {
+                continue;
+            }
+            $url = wp_get_attachment_url($attachment_id);
+            if ($url) {
+                $resolved[$node_id] = [
+                    'url' => $url,
+                    'id' => $attachment_id,
+                ];
+            }
+        }
+
+        if (empty($resolved)) {
+            return $data;
+        }
+
+        return $this->walk_and_replace($data, $resolved);
+    }
+
+    /**
+     * Recursively collect unique node IDs found in figma-image:// placeholders.
+     */
+    private function collect_placeholder_ids(array $data): array {
+        $ids = [];
+        array_walk_recursive($data, function ($value) use (&$ids): void {
+            if (is_string($value) && str_starts_with($value, 'figma-image://')) {
+                $node_id = substr($value, strlen('figma-image://'));
+                if ($node_id !== '') {
+                    $ids[$node_id] = true;
+                }
+            }
+        });
+        return array_keys($ids);
+    }
+
+    /**
+     * Recursively walk the Elementor data array and replace placeholders.
+     *
+     * When an array with a "url" key contains a figma-image:// placeholder,
+     * both its "url" and "id" fields are replaced with the real attachment data.
+     */
+    private function walk_and_replace(array $data, array $resolved): array {
+        foreach ($data as $key => &$value) {
+            if (is_array($value)) {
+                if (isset($value['url']) && is_string($value['url']) && str_starts_with($value['url'], 'figma-image://')) {
+                    $node_id = substr($value['url'], strlen('figma-image://'));
+                    if (isset($resolved[$node_id])) {
+                        $value['url'] = $resolved[$node_id]['url'];
+                        $value['id'] = $resolved[$node_id]['id'];
+                    }
+                } else {
+                    $value = $this->walk_and_replace($value, $resolved);
+                }
+            }
+        }
+        unset($value);
+        return $data;
+    }
+
+    /**
      * Sideload an image from URL into WordPress media library.
      *
      * @param string $url Image URL

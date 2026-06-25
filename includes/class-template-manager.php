@@ -50,6 +50,18 @@ class Template_Manager {
 
         if (!is_wp_error($post_id)) {
             wp_set_object_terms($post_id, $type, self::TAXONOMY);
+
+            update_post_meta(
+                $post_id,
+                '_elementor_version',
+                defined('ELEMENTOR_VERSION') ? ELEMENTOR_VERSION : '3.27.0'
+            );
+
+            if (class_exists('\Elementor\Core\Files\CSS\Post')) {
+                $css_file = new \Elementor\Core\Files\CSS\Post($post_id);
+                $css_file->delete();
+                $css_file->update();
+            }
         }
 
         return $post_id;

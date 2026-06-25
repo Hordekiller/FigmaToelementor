@@ -182,7 +182,7 @@ class Elementor_Renderer {
         }
 
         $figma_type = $node['type'] ?? '';
-        [$elType, $widgetType] = $this->resolve_type($figma_type);
+        [$elType, $widgetType] = $this->resolve_type($node);
 
         $element = [
             'id' => $this->generate_id(),
@@ -213,7 +213,16 @@ class Elementor_Renderer {
     /**
      * Resolve Figma type → Elementor elType/widgetType.
      */
-    private function resolve_type(string $figma_type): array {
+    private function resolve_type(array $node): array {
+        $figma_type = $node['type'] ?? '';
+
+        if (in_array($figma_type, ['RECTANGLE', 'ELLIPSE'], true)) {
+            $fill = $this->get_visible_fill($node);
+            if ($fill !== null && ($fill['type'] ?? '') === 'IMAGE') {
+                return ['widget', 'image'];
+            }
+        }
+
         return self::NODE_MAP[$figma_type] ?? ['container', null];
     }
 
@@ -312,11 +321,11 @@ class Elementor_Renderer {
                 break;
 
             case 'IMAGE':
-                $ref = $fill['imageRef'] ?? '';
-                if ($ref) {
+                $node_id = $node['id'] ?? '';
+                if ($node_id) {
                     $settings->background_background = 'classic';
                     $settings->background_image = (object) [
-                        'url' => "figma-image://{$ref}",
+                        'url' => "figma-image://{$node_id}",
                         'id' => 0,
                     ];
                     $settings->background_size = 'cover';
@@ -563,10 +572,10 @@ class Elementor_Renderer {
         $settings->image_size = 'full';
         $settings->align = 'center';
 
-        $fills = $node['fills'] ?? [];
-        if (!empty($fills) && !empty($fills[0]['imageRef'] ?? '')) {
+        $node_id = $node['id'] ?? '';
+        if ($node_id) {
             $settings->image = (object) [
-                'url' => "figma-image://{$fills[0]['imageRef']}",
+                'url' => "figma-image://{$node_id}",
                 'id' => 0,
             ];
         }
