@@ -178,11 +178,22 @@ class Elementor_Renderer {
      */
     private function convert_node(array $node): ?array {
         if (!$this->should_render($node)) {
+            Logger::log('INFO', 'ElementorRenderer', 'Skipping non-visible node', [
+                'figma_type' => $node['type'] ?? null,
+                'name' => $node['name'] ?? null,
+            ]);
             return null;
         }
 
         $figma_type = $node['type'] ?? '';
         [$elType, $widgetType] = $this->resolve_type($node);
+
+        Logger::log('INFO', 'ElementorRenderer', 'Converting node', [
+            'figma_type' => $figma_type,
+            'resolved_elType' => $elType,
+            'resolved_widgetType' => $widgetType,
+            'name' => $node['name'] ?? null,
+        ]);
 
         $element = [
             'id' => $this->generate_id(),
@@ -542,6 +553,12 @@ class Elementor_Renderer {
                 $settings->{"typography_{$key}"} = $value;
             }
         }
+
+        Logger::log('INFO', 'ElementorRenderer', 'Heading typography extracted', [
+            'characters_length' => strlen($characters),
+            'has_typography' => $has_typography,
+            'typography_keys' => array_keys($typo),
+        ]);
 
         // Text alignment
         $figma_align = $style['textAlignHorizontal'] ?? 'LEFT';

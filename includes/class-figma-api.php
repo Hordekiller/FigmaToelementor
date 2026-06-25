@@ -196,12 +196,23 @@ class Figma_API {
      */
     private function request(string $endpoint): ?array {
         if (empty($this->token)) {
+            Logger::log('WARNING', 'FigmaAPI', 'Request skipped — no token set', [
+                'endpoint' => $endpoint,
+            ]);
             return null;
         }
 
         $this->enforce_rate_limit();
 
         $url = self::API_BASE . ltrim($endpoint, '/');
+        $redacted_url = str_replace($this->token, '[REDACTED]', $url);
+
+        Logger::log('INFO', 'FigmaAPI', 'Figma API request', [
+            'url' => $redacted_url,
+            'endpoint' => $endpoint,
+            'method' => 'GET',
+        ]);
+
         $response = wp_remote_get($url, [
             'headers' => [
                 'X-Figma-Token' => $this->token,
@@ -211,12 +222,25 @@ class Figma_API {
         ]);
 
         if (is_wp_error($response)) {
-            do_action('hello_figma_api_error', $response->get_error_message(), $endpoint);
+            $error_msg = $response->get_error_message();
+            Logger::log('ERROR', 'FigmaAPI', 'Figma API request failed', [
+                'error_message' => $error_msg,
+                'url' => $redacted_url,
+                'endpoint' => $endpoint,
+            ]);
+            do_action('hello_figma_api_error', $error_msg, $endpoint);
             return null;
         }
 
         $code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
+
+        Logger::log('INFO', 'FigmaAPI', 'Figma API response received', [
+            'http_code' => $code,
+            'body_length' => strlen($body),
+            'url' => $redacted_url,
+            'endpoint' => $endpoint,
+        ]);
 
         if ($code !== 200) {
             $error_message = sprintf(
@@ -224,12 +248,22 @@ class Figma_API {
                 $code,
                 wp_remote_retrieve_response_message($response)
             );
+            Logger::log('WARNING', 'FigmaAPI', 'Non-200 Figma API response', [
+                'http_code' => $code,
+                'response_message' => wp_remote_retrieve_response_message($response),
+                'body_preview' => substr($body, 0, 500),
+                'endpoint' => $endpoint,
+            ]);
             do_action('hello_figma_api_error', $error_message, $endpoint);
             return null;
         }
 
         $data = json_decode($body, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
+            Logger::log('ERROR', 'FigmaAPI', 'Invalid JSON response from Figma', [
+                'json_error' => json_last_error_msg(),
+                'endpoint' => $endpoint,
+            ]);
             do_action('hello_figma_api_error', 'Invalid JSON response', $endpoint);
             return null;
         }

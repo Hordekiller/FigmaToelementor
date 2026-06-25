@@ -25,6 +25,18 @@ class Template_Manager {
         // Extract just the content array for _elementor_data (Elementor stores elements directly)
         $content = $elementor_data['content'] ?? [$elementor_data];
 
+        $elementor_data_json = wp_json_encode($content);
+        $elementor_data_size = strlen($elementor_data_json);
+        $element_count = count($content);
+
+        Logger::log('INFO', 'TemplateManager', 'Preparing to save template', [
+            'title' => $title,
+            'type' => $type,
+            'file_key' => $file_key,
+            'elementor_data_bytes' => $elementor_data_size,
+            'top_level_element_count' => $element_count,
+        ]);
+
         $post_data = [
             'post_title' => $title,
             'post_type' => self::POST_TYPE,
@@ -32,7 +44,7 @@ class Template_Manager {
             'meta_input' => [
                 '_elementor_template_type' => $type,
                 '_elementor_edit_mode' => 'builder',
-                '_elementor_data' => wp_slash(wp_json_encode($content)),
+                '_elementor_data' => wp_slash($elementor_data_json),
                 self::SOURCE_META => 'figma',
                 self::FILE_KEY_META => $file_key,
                 self::FIGMA_DATA_META => wp_json_encode([
@@ -49,6 +61,11 @@ class Template_Manager {
         $post_id = wp_insert_post($post_data);
 
         if (!is_wp_error($post_id)) {
+            Logger::log('INFO', 'TemplateManager', 'Template post created', [
+                'post_id' => $post_id,
+                'title' => $title,
+            ]);
+
             wp_set_object_terms($post_id, $type, self::TAXONOMY);
 
             update_post_meta(
@@ -58,10 +75,41 @@ class Template_Manager {
             );
 
             if (class_exists('\Elementor\Core\Files\CSS\Post')) {
-                $css_file = new \Elementor\Core\Files\CSS\Post($post_id);
-                $css_file->delete();
-                $css_file->update();
+                Logger::log('INFO', 'TemplateManager', 'Triggering Elementor CSS generation', [
+                    'post_id' => $post_id,
+                ]);
+
+                try {
+                    $css_file = new \Elementor\Core\Files\CSS\Post($post_id);
+                    $css_file->delete();
+                    $css_file->update();
+
+                    $css_path = $css_file->get_path();
+                    $file_exists = file_exists($css_path);
+                    $file_size = $file_exists ? filesize($css_path) : 0;
+
+                    Logger::log('INFO', 'TemplateManager', 'Elementor CSS generation completed', [
+                        'post_id' => $post_id,
+                        'css_path' => $css_path,
+                        'file_exists' => $file_exists,
+                        'file_size_bytes' => $file_size,
+                    ]);
+                } catch (\Throwable $e) {
+                    Logger::log('ERROR', 'TemplateManager', 'Elementor CSS generation threw exception', [
+                        'post_id' => $post_id,
+                        'error_message' => $e->getMessage(),
+                    ]);
+                }
+            } else {
+                Logger::log('WARNING', 'TemplateManager', 'Elementor CSS Post class not found — cannot generate CSS', [
+                    'post_id' => $post_id,
+                ]);
             }
+        } else {
+            Logger::log('ERROR', 'TemplateManager', 'wp_insert_post failed', [
+                'error_message' => $post_id->get_error_message(),
+                'title' => $title,
+            ]);
         }
 
         return $post_id;

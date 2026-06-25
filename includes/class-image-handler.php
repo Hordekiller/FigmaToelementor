@@ -62,12 +62,24 @@ class Image_Handler {
         $ids = array_keys($node_ids);
         $images = $this->figma_api->get_images($file_key, $ids, $format);
         if ($images === null) {
+            Logger::log('WARNING', 'ImageHandler', 'get_images returned null for batch', [
+                'node_ids' => $ids,
+                'file_key' => $file_key,
+            ]);
             return [];
         }
 
         $results = [];
         foreach ($images as $node_id => $image_url) {
+            Logger::log('INFO', 'ImageHandler', 'Resolving image', [
+                'ref_or_node_id' => $node_id,
+                'file_key' => $file_key,
+            ]);
+
             if (empty($image_url)) {
+                Logger::log('WARNING', 'ImageHandler', 'Figma returned null URL for ref', [
+                    'ref' => $node_id,
+                ]);
                 $results[$node_id] = new \WP_Error(
                     'figma_image_empty',
                     sprintf('Empty URL for node %s', $node_id)
@@ -75,8 +87,29 @@ class Image_Handler {
                 continue;
             }
 
+            Logger::log('INFO', 'ImageHandler', 'Downloading image binary', [
+                'resolved_url' => $image_url,
+                'node_id' => $node_id,
+            ]);
+
             $name = $node_ids[$node_id] ?? '';
-            $results[$node_id] = $this->sideload_image($image_url, $name, $node_id);
+            $attachment_id = $this->sideload_image($image_url, $name, $node_id);
+
+            if (is_wp_error($attachment_id)) {
+                Logger::log('ERROR', 'ImageHandler', 'Image sideload failed', [
+                    'node_id' => $node_id,
+                    'error_message' => $attachment_id->get_error_message(),
+                ]);
+            } else {
+                $final_url = wp_get_attachment_url($attachment_id);
+                Logger::log('INFO', 'ImageHandler', 'Image sideload succeeded', [
+                    'node_id' => $node_id,
+                    'attachment_id' => $attachment_id,
+                    'final_url' => $final_url,
+                ]);
+            }
+
+            $results[$node_id] = $attachment_id;
         }
 
         return $results;
@@ -94,8 +127,14 @@ class Image_Handler {
     public function resolve_image_placeholders(string $file_key, array $data): array {
         $node_ids = $this->collect_placeholder_ids($data);
         if (empty($node_ids)) {
+            Logger::log('INFO', 'ImageHandler', 'No image placeholders found in converted data');
             return $data;
         }
+
+        Logger::log('INFO', 'ImageHandler', 'Image placeholders discovered', [
+            'count' => count($node_ids),
+            'node_ids' => $node_ids,
+        ]);
 
         $name_map = [];
         foreach ($node_ids as $id) {
@@ -105,8 +144,10 @@ class Image_Handler {
         $results = $this->batch_download_images($file_key, $name_map, 'png');
 
         $resolved = [];
+        $failures = 0;
         foreach ($results as $node_id => $attachment_id) {
             if (is_wp_error($attachment_id)) {
+                $failures++;
                 continue;
             }
             $url = wp_get_attachment_url($attachment_id);
@@ -118,11 +159,25 @@ class Image_Handler {
             }
         }
 
+        Logger::log('INFO', 'ImageHandler', 'Image download batch complete', [
+            'requested' => count($node_ids),
+            'succeeded' => count($resolved),
+            'failed' => $failures,
+        ]);
+
         if (empty($resolved)) {
             return $data;
         }
 
-        return $this->walk_and_replace($data, $resolved);
+        $result = $this->walk_and_replace($data, $resolved);
+
+        Logger::log('INFO', 'ImageHandler', 'Placeholder replacement complete', [
+            'placeholders_found' => count($node_ids),
+            'replaced' => count($resolved),
+            'unresolved' => count($node_ids) - count($resolved),
+        ]);
+
+        return $result;
     }
 
     /**

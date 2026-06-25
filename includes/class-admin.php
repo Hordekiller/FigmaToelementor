@@ -126,6 +126,15 @@ class Admin {
     public function ajax_convert(): void {
         $this->verify_ajax();
 
+        Logger::start_run(uniqid('figma_import_'));
+
+        Logger::log('INFO', 'Admin', 'Import started', [
+            'file_key' => $this->get_file_key_from_post('file_key'),
+            'node_id' => sanitize_text_field($_POST['node_id'] ?? ''),
+            'title' => sanitize_text_field($_POST['title'] ?? ''),
+            'format' => sanitize_text_field($_POST['format'] ?? 'post'),
+        ]);
+
         $file_key = $this->get_file_key_from_post('file_key');
         $node_id = sanitize_text_field($_POST['node_id'] ?? '');
         $title = sanitize_text_field($_POST['title'] ?? __('Figma Import', 'hello-figma'));
