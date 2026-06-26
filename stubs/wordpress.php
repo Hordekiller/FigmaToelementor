@@ -1,8 +1,7 @@
 <?php
 
-if (!defined('ABSPATH')) {
-    define('ABSPATH', '/');
-}
+// ABSPATH intentionally not defined here — let it be the real WordPress path at runtime.
+// In CI (no WordPress), the `defined('ABSPATH') || exit` guards are understood by PHPStan.
 if (!defined('WP_UNINSTALL_PLUGIN')) {
     define('WP_UNINSTALL_PLUGIN', true);
 }
@@ -56,6 +55,8 @@ if (!function_exists('is_plugin_active')) { function is_plugin_active(...$args):
 if (!function_exists('did_action')) { function did_action(...$args): int { return 0; } }
 if (!function_exists('add_menu_page')) { function add_menu_page(...$args): string { return ''; } }
 if (!function_exists('add_submenu_page')) { function add_submenu_page(...$args): string { return ''; } }
+if (!function_exists('current_time')) { function current_time(string $type): string { return ''; } }
+if (!function_exists('flush_rewrite_rules')) { function flush_rewrite_rules(): void {} }
 if (!function_exists('wp_remote_get')) {
     /**
      * @return array<string, mixed>|\WP_Error
@@ -85,7 +86,14 @@ if (!function_exists('update_post_meta')) { function update_post_meta(...$args):
 if (!function_exists('get_the_ID')) { function get_the_ID(...$args): int { return 0; } }
 if (!function_exists('get_the_title')) { function get_the_title(...$args): string { return ''; } }
 if (!function_exists('get_the_date')) { function get_the_date(...$args): string { return ''; } }
-if (!function_exists('wp_insert_post')) { function wp_insert_post(...$args): int|object { return 0; } }
+if (!function_exists('wp_insert_post')) {
+    /**
+     * @param mixed[] $postarr
+     * @param bool $wp_error
+     * @return int|\WP_Error
+     */
+    function wp_insert_post($postarr = [], $wp_error = false): int|object { return 0; }
+}
 if (!function_exists('wp_delete_post')) { function wp_delete_post(...$args): ?object { return null; } }
 if (!function_exists('wp_update_post')) { function wp_update_post(...$args): int|object { return 0; } }
 if (!function_exists('wp_get_attachment_url')) { function wp_get_attachment_url(...$args): string { return ''; } }
@@ -114,7 +122,7 @@ if (!function_exists('is_wp_error')) {
      * @param mixed $thing
      * @phpstan-assert-if-true \WP_Error $thing
      */
-    function is_wp_error(...$args): bool { return false; }
+    function is_wp_error($thing): bool { return false; }
 }
 if (!function_exists('load_plugin_textdomain')) { function load_plugin_textdomain(...$args): bool { return true; } }
 if (!function_exists('wp_using_ext_object_cache')) { function wp_using_ext_object_cache(...$args): bool { return false; } }

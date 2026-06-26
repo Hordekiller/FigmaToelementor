@@ -16,4 +16,4 @@ parameters:
         - stubs/wordpress.php
         - stubs/elementor.php
     reportUnmatchedIgnoredErrors: true
-    ignoreErrors:
+    ignoreErrors: []
