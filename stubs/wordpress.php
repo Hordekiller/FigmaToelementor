@@ -94,7 +94,7 @@ if (!function_exists('wp_insert_post')) {
      */
     function wp_insert_post($postarr = [], $wp_error = false): int|object { return 0; }
 }
-if (!function_exists('wp_delete_post')) { function wp_delete_post(...$args): ?object { return null; } }
+if (!function_exists('wp_delete_post')) { function wp_delete_post(...$args): \WP_Post|false|null { return null; } }
 if (!function_exists('wp_update_post')) { function wp_update_post(...$args): int|object { return 0; } }
 if (!function_exists('wp_get_attachment_url')) { function wp_get_attachment_url(...$args): string { return ''; } }
 if (!function_exists('wp_get_attachment_image_srcset')) { function wp_get_attachment_image_srcset(...$args): array|false { return false; } }
