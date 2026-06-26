@@ -57,6 +57,9 @@ class Widget_Base {
     protected function add_render_attribute($element, $key = null, $value = null, $overwrite = false) {}
     protected function print_render_attribute_string($element) {}
     protected function get_render_attribute_string($element): string { return ''; }
+    public function get_settings_for_display($setting = null) { return []; }
+    protected function add_link_attributes($element, $data = []) {}
+    public function get_children() { return []; }
 }
 
 class Utils {
@@ -90,6 +93,8 @@ namespace Elementor\Core\Files\CSS;
 class Post {
     public function __construct($post_id) {}
     public function update() {}
+    public function delete() {}
+    public function get_path(): string { return ''; }
 }
 
 namespace Elementor\Modules\DynamicTags;

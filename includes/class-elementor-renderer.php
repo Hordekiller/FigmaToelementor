@@ -144,7 +144,7 @@ class Elementor_Renderer
                 $converted = $this->convert_node($child, $frame_layout_mode, $override);
                 if ($converted !== null) {
                     // Apply absolute positioning for frame-level children when frame has no auto-layout
-                    if ($frame_bbox !== null && $this->should_position_absolute($child, $frame_layout_mode)) {
+                    if ($frame_bbox !== null && $this->node_needs_absolute_positioning($child, $frame_layout_mode)) {
                         $this->apply_absolute_positioning($converted, $child, $frame_bbox);
                     }
                     $content[] = $converted;
