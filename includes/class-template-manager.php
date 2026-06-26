@@ -21,7 +21,7 @@ class Template_Manager {
      * @param string $type Template type (page, section, etc.)
      * @return int|\WP_Error Post ID
      */
-    public function save_template(array $elementor_data, string $title, string $file_key, string $type = 'page') {
+    public function save_template(array $elementor_data, string $title, string $file_key, string $type = 'page', string $node_name = '', string $file_name = '') {
         // Extract just the content array for _elementor_data (Elementor stores elements directly)
         $content = $elementor_data['content'] ?? [$elementor_data];
 
@@ -50,8 +50,12 @@ class Template_Manager {
                 self::FIGMA_DATA_META => wp_json_encode([
                     'source' => 'figma',
                     'file_key' => $file_key,
+                    'node_name' => $node_name ?: $title,
+                    'file_name' => $file_name,
                     'imported_at' => current_time('mysql'),
                 ]),
+                '_hello_figma_node_name' => $node_name ?: $title,
+                '_hello_figma_file_name' => $file_name,
             ],
         ];
 

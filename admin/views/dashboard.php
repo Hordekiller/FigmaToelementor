@@ -59,6 +59,26 @@
         </div>
     </div>
 
+    <!-- Step 2-Review: Section Preview & Type Overrides -->
+    <div class="hello-figma-step" id="step-2-review" style="display:none;">
+        <div class="hello-figma-card">
+            <h2><?php esc_html_e('Review Sections', 'hello-figma'); ?></h2>
+            <p><?php esc_html_e('Review each section of the frame and override the detected type if needed before final import.', 'hello-figma'); ?></p>
+            <div id="hello-figma-review-grid" class="hello-figma-review-grid">
+                <!-- Sections rendered by JS -->
+            </div>
+            <div class="hello-figma-review-actions" style="margin-top:20px;">
+                <button type="button" id="hello-figma-confirm-import" class="button button-primary">
+                    <?php esc_html_e('Confirm & Import', 'hello-figma'); ?>
+                </button>
+                <button type="button" id="hello-figma-back-to-frames" class="button">
+                    <?php esc_html_e('Back', 'hello-figma'); ?>
+                </button>
+            </div>
+            <div id="step-2-review-error" class="hello-figma-error" style="display:none;"></div>
+        </div>
+    </div>
+
     <!-- Step 2: Frame Browser -->
     <div class="hello-figma-step" id="step-2" style="display:none;">
         <div class="hello-figma-card">
@@ -97,8 +117,12 @@
     <!-- Convert Progress -->
     <div id="hello-figma-convert-progress" style="display:none;">
         <div class="hello-figma-card">
-            <h3><?php esc_html_e('Converting...', 'hello-figma'); ?></h3>
-            <p><?php esc_html_e('Please wait while your Figma frame is converted to an Elementor template.', 'hello-figma'); ?></p>
+            <h3><?php esc_html_e('Importing...', 'hello-figma'); ?></h3>
+            <div class="hello-figma-progress-track">
+                <div class="hello-figma-progress-bar" id="hello-figma-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <p id="hello-figma-progress-label" class="hello-figma-progress-label"><?php esc_html_e('Starting...', 'hello-figma'); ?></p>
+            <p id="hello-figma-progress-detail" class="hello-figma-progress-detail"></p>
         </div>
     </div>
 

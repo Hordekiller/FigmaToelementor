@@ -109,7 +109,7 @@ class Elementor_Renderer {
      *
      * @return array|null Template structure matching Elementor's JSON spec
      */
-    public function convert_node_to_template(string $file_key, string $node_id): ?array {
+    public function convert_node_to_template(string $file_key, string $node_id, array $overrides = []): ?array {
         $data = $this->figma_api->get_file_nodes($file_key, [$node_id]);
         if ($data === null || !isset($data['nodes'][$node_id])) {
             return null;
@@ -133,7 +133,9 @@ class Elementor_Renderer {
             // Top-level sections are the frame's direct children
             $frame_layout_mode = $document['layoutMode'] ?? null;
             foreach ($children as $child) {
-                $converted = $this->convert_node($child, $frame_layout_mode);
+                $child_id = $child['id'] ?? '';
+                $override = array_key_exists($child_id, $overrides) ? $overrides[$child_id] : null;
+                $converted = $this->convert_node($child, $frame_layout_mode, $override);
                 if ($converted !== null) {
                     $content[] = $converted;
                 }
@@ -153,11 +155,58 @@ class Elementor_Renderer {
     }
 
     /**
+     * Preview sections (direct children) of a frame, with thumbnail URLs and
+     * auto-detected component type suggestions.
+     *
+     * @param string $file_key Figma file key
+     * @param string $node_id  Frame node ID
+     * @return array|null Array of section arrays, or null if the frame is not found.
+     */
+    public function get_sections_preview(string $file_key, string $node_id): ?array {
+        $data = $this->figma_api->get_file_nodes($file_key, [$node_id]);
+        if ($data === null || !isset($data['nodes'][$node_id])) {
+            return null;
+        }
+
+        $document = $data['nodes'][$node_id]['document'] ?? null;
+        if ($document === null) {
+            return null;
+        }
+
+        $children = $document['children'] ?? [];
+        $sections = [];
+        $child_ids = [];
+
+        foreach ($children as $child) {
+            $child_id = $child['id'] ?? '';
+            if ($child_id === '') {
+                continue;
+            }
+            $child_ids[] = $child_id;
+            $sections[] = [
+                'id' => $child_id,
+                'name' => $child['name'] ?? 'Untitled',
+                'suggested_type' => Component_Detector::detect($child['name'] ?? '') ?? 'container',
+            ];
+        }
+
+        if (!empty($child_ids)) {
+            $thumbnails = $this->figma_api->get_thumbnail_urls($file_key, $child_ids);
+            foreach ($sections as &$section) {
+                $section['thumbnail_url'] = $thumbnails[$section['id']] ?? null;
+            }
+            unset($section);
+        }
+
+        return $sections;
+    }
+
+    /**
      * Legacy BC: if node_id given, convert that; otherwise pick first frame.
      */
-    public function convert_file(string $file_key, ?string $node_id = null): ?array {
+    public function convert_file(string $file_key, ?string $node_id = null, array $overrides = []): ?array {
         if ($node_id) {
-            return $this->convert_node_to_template($file_key, $node_id);
+            return $this->convert_node_to_template($file_key, $node_id, $overrides);
         }
         $structure = $this->get_file_structure($file_key);
         if ($structure === null || empty($structure['canvases'])) {
@@ -177,7 +226,7 @@ class Elementor_Renderer {
      *
      * @return array|null { id, elType, widgetType?, isInner, settings, elements }
      */
-    private function convert_node(array $node, ?string $parent_layout_mode = null): ?array {
+    private function convert_node(array $node, ?string $parent_layout_mode = null, ?string $component_override = null): ?array {
         if (!$this->should_render($node)) {
             Logger::log('INFO', 'ElementorRenderer', 'Skipping non-visible node', [
                 'figma_type' => $node['type'] ?? null,
@@ -188,8 +237,12 @@ class Elementor_Renderer {
 
         $figma_type = $node['type'] ?? '';
 
-        // ── Component-type detection from layer name ──
-        $component_type = Component_Detector::detect($node['name'] ?? '');
+        // ── Component-type detection from layer name (or override) ──
+        if ($component_override !== null) {
+            $component_type = ($component_override === 'container') ? null : $component_override;
+        } else {
+            $component_type = Component_Detector::detect($node['name'] ?? '');
+        }
 
         // ── Slider / Carousel: attempt structural conversion ──
         if ($component_type !== null && in_array($component_type, ['slider', 'carousel'], true)) {
@@ -198,6 +251,28 @@ class Elementor_Renderer {
                 $carousel_element = $this->try_build_carousel($node, $component_type);
                 if ($carousel_element !== null) {
                     return $carousel_element;
+                }
+            }
+        }
+
+        // ── FAQ → Accordion: attempt structural conversion ──
+        if ($component_type === 'faq') {
+            $container_types = ['FRAME', 'GROUP', 'COMPONENT', 'INSTANCE'];
+            if (in_array($figma_type, $container_types, true)) {
+                $accordion_element = $this->try_build_accordion($node);
+                if ($accordion_element !== null) {
+                    return $accordion_element;
+                }
+            }
+        }
+
+        // ── Gallery → Basic Gallery: attempt structural conversion ──
+        if ($component_type === 'gallery') {
+            $container_types = ['FRAME', 'GROUP', 'COMPONENT', 'INSTANCE'];
+            if (in_array($figma_type, $container_types, true)) {
+                $gallery_element = $this->try_build_gallery($node);
+                if ($gallery_element !== null) {
+                    return $gallery_element;
                 }
             }
         }
@@ -256,11 +331,16 @@ class Elementor_Renderer {
     private function resolve_type(array $node): array {
         $figma_type = $node['type'] ?? '';
 
-        if (in_array($figma_type, ['RECTANGLE', 'ELLIPSE'], true)) {
+        if (in_array($figma_type, ['RECTANGLE', 'ELLIPSE', 'BOOLEAN_OPERATION', 'STAR', 'POLYGON'], true)) {
             $fill = $this->get_visible_fill($node);
             if ($fill !== null && ($fill['type'] ?? '') === 'IMAGE') {
                 return ['widget', 'image'];
             }
+        }
+
+        // Vector shapes → render as images via Figma export API
+        if (in_array($figma_type, ['BOOLEAN_OPERATION', 'STAR', 'POLYGON'], true)) {
+            return ['widget', 'image'];
         }
 
         return self::NODE_MAP[$figma_type] ?? ['container', null];
@@ -331,7 +411,6 @@ class Elementor_Renderer {
                 if (empty($color)) {
                     break;
                 }
-                // Skip fully transparent fills
                 if (($color['a'] ?? 1) <= 0) {
                     break;
                 }
@@ -343,21 +422,33 @@ class Elementor_Renderer {
                 break;
 
             case 'GRADIENT':
+            case 'GRADIENT_RADIAL':
+            case 'GRADIENT_ANGULAR':
+            case 'GRADIENT_DIAMOND':
                 $settings->background_background = 'gradient';
-                $settings->background_gradient_type = 'linear';
+                $settings->background_gradient_type = $type === 'GRADIENT_RADIAL' ? 'radial' : 'linear';
                 $stops = $fill['gradientStops'] ?? [];
                 $total = count($stops);
                 if ($total > 0) {
                     for ($i = 0; $i < $total; $i++) {
                         $stop = $stops[$i];
-                        $pct = $i === 0 ? 0 : ($i === $total - 1 ? 100 : (int) round(($stop['position'] ?? 0) * 100));
+                        $position = $stop['position'] ?? ($total > 1 ? $i / ($total - 1) : 0);
+                        $pct = (int) round($position * 100);
                         $settings->{"background_gradient_color_{$i}"} = $this->rgba_to_hex($stop['color'] ?? []);
                         $settings->{"background_gradient_color_before_{$i}"} = "{$pct}%";
                     }
                 }
-                // Gradient direction from handle positions
-                if (!empty($fill['gradientHandlePositions'])) {
-                    $settings->background_gradient_angle = 180; // default linear bottom-to-top
+                // Gradient angle from handle positions
+                if (!empty($fill['gradientHandlePositions']) && count($fill['gradientHandlePositions']) >= 2) {
+                    $start = $fill['gradientHandlePositions'][0];
+                    $end = $fill['gradientHandlePositions'][1];
+                    $dx = ($end['x'] ?? 0) - ($start['x'] ?? 0);
+                    $dy = ($end['y'] ?? 0) - ($start['y'] ?? 0);
+                    $angle = rad2deg(atan2($dx, -$dy));
+                    if ($angle < 0) {
+                        $angle += 360;
+                    }
+                    $settings->background_gradient_angle = (int) round($angle);
                 }
                 break;
 
@@ -398,17 +489,27 @@ class Elementor_Renderer {
         $settings->border_border = 'solid';
         $settings->border_color = $this->rgba_to_hex($color);
 
-        // Stroke weight: Figma may return a single number or object with 'all'
+        // Stroke weight: Figma may return a single number or an object with per-side values
         $stroke_weight = $node['strokeWeight'] ?? null;
-        if (is_array($stroke_weight)) {
-            $stroke_weight = $stroke_weight['all'] ?? 1;
+        $w = 1;
+        $is_linked = true;
+        $top = $w; $right = $w; $bottom = $w; $left = $w;
+
+        if (is_numeric($stroke_weight)) {
+            $w = max(1, (int) $stroke_weight);
+            $top = $right = $bottom = $left = $w;
+        } elseif (is_array($stroke_weight)) {
+            $top = max(1, (int) ($stroke_weight['top'] ?? $stroke_weight['all'] ?? 1));
+            $right = max(1, (int) ($stroke_weight['right'] ?? $stroke_weight['all'] ?? $top));
+            $bottom = max(1, (int) ($stroke_weight['bottom'] ?? $stroke_weight['all'] ?? $top));
+            $left = max(1, (int) ($stroke_weight['left'] ?? $stroke_weight['all'] ?? $right));
+            $is_linked = ($top === $right && $right === $bottom && $bottom === $left);
         }
-        $w = max(1, (int) ($stroke_weight ?? 1));
 
         $settings->border_width = (object) [
             'unit' => 'px',
-            'top' => $w, 'right' => $w, 'bottom' => $w, 'left' => $w,
-            'isLinked' => true,
+            'top' => $top, 'right' => $right, 'bottom' => $bottom, 'left' => $left,
+            'isLinked' => $is_linked,
         ];
 
         // Stroke alignment: inside/outside/center
@@ -613,13 +714,33 @@ class Elementor_Renderer {
     }
 
     private function extract_button_settings(array $node, \stdClass $settings): void {
-        $settings->text = $node['name'] ?? __('Button', 'hello-figma');
+        // Try to find text from child TEXT nodes first
+        $texts = $this->find_text_nodes_in_subtree($node, 1);
+        if (!empty($texts)) {
+            $settings->text = $texts[0]['characters'] ?? $node['name'];
+        } else {
+            // Map common button layer names
+            $name_labels = [
+                'button', 'btn', 'دکمه', 'click', 'submit',
+                'ثبت', 'ارسال', 'buy', 'shop', 'خرید',
+            ];
+            $name_lower = mb_strtolower(trim($node['name'] ?? ''));
+            $settings->text = in_array($name_lower, $name_labels, true)
+                ? ($node['name'] ?? __('Button', 'hello-figma'))
+                : ($node['name'] ?? __('Button', 'hello-figma'));
+        }
+
         $settings->button_size = 'md';
         $settings->align = 'center';
 
         $fills = $node['fills'] ?? [];
         if (!empty($fills) && ($fills[0]['type'] ?? '') === 'SOLID') {
             $settings->button_background_color = $this->rgba_to_hex($fills[0]['color'] ?? []);
+        }
+
+        // Extract hover background if available from component variants
+        if (!empty($node['componentPropertyDefinitions'])) {
+            $settings->hover_background_color = $settings->button_background_color ?? '#000000';
         }
     }
 
@@ -880,6 +1001,172 @@ class Elementor_Renderer {
         }
 
         return null;
+    }
+
+    // ── FAQ / Accordion Conversion ──
+
+    /**
+     * Attempt to build an Elementor Accordion widget from a node.
+     *
+     * Conditions (both must hold):
+     *   1. component_type === 'faq'.
+     *   2. Node has at least 1 direct child, AND at least 70% of those children
+     *      are FRAME/GROUP nodes containing at least 2 descendant TEXT nodes
+     *      within 2 levels of depth.
+     *
+     * If conditions are not met or no valid items remain, returns null.
+     *
+     * @return array|null An accordion widget element, or null.
+     */
+    private function try_build_accordion(array $node): ?array {
+        $children = $node['children'] ?? [];
+        $total = count($children);
+
+        if ($total < 1) {
+            return null;
+        }
+
+        // Count children that match the text-rich frame pattern
+        $matched_items = [];
+        foreach ($children as $child) {
+            $figma_type = $child['type'] ?? '';
+            if (!in_array($figma_type, ['FRAME', 'GROUP'], true)) {
+                continue;
+            }
+            $texts = $this->find_text_nodes_in_subtree($child, 2);
+            if (count($texts) >= 2) {
+                $matched_items[] = $child;
+            }
+        }
+
+        if (count($matched_items) / $total < 0.7) {
+            return null;
+        }
+
+        $accordion_settings = new \stdClass();
+        $accordion_settings->tabs = [];
+
+        foreach ($matched_items as $item_node) {
+            $texts = $this->find_text_nodes_in_subtree($item_node, 2);
+            if (count($texts) < 2) {
+                continue;
+            }
+            $accordion_settings->tabs[] = [
+                'tab_title' => $texts[0]['characters'] ?? '',
+                'tab_content' => '<p>' . ($texts[1]['characters'] ?? '') . '</p>',
+            ];
+        }
+
+        if (empty($accordion_settings->tabs)) {
+            return null;
+        }
+
+        $accordion_settings->_css_classes = 'figma-detected-faq';
+
+        return [
+            'id' => $this->generate_id(),
+            'elType' => 'widget',
+            'widgetType' => 'accordion',
+            'isInner' => false,
+            'settings' => $accordion_settings,
+            'elements' => [],
+        ];
+    }
+
+    // ── Gallery / Basic Gallery Conversion ──
+
+    /**
+     * Attempt to build an Elementor Image Gallery widget from a node.
+     *
+     * Conditions (same shape as carousel):
+     *   1. component_type === 'gallery'.
+     *   2. Node has at least 2 direct children, AND at least 70% have a visible
+     *      IMAGE fill within 1 level of descendants.
+     *
+     * @return array|null A gallery widget element, or null.
+     */
+    private function try_build_gallery(array $node): ?array {
+        $children = $node['children'] ?? [];
+        $total = count($children);
+
+        if ($total < 2) {
+            return null;
+        }
+
+        $matched_images = [];
+        foreach ($children as $child) {
+            $img_node = $this->find_image_in_subtree($child, 1);
+            if ($img_node !== null) {
+                $matched_images[] = $child;
+            }
+        }
+
+        if (count($matched_images) / $total < 0.7) {
+            return null;
+        }
+
+        $gallery_settings = new \stdClass();
+        $gallery_settings->wp_gallery = [];
+
+        foreach ($matched_images as $child) {
+            $img_node = $this->find_image_in_subtree($child, 1);
+            if ($img_node === null) {
+                continue;
+            }
+            $node_id = $img_node['id'] ?? '';
+            if ($node_id) {
+                $gallery_settings->wp_gallery[] = [
+                    'id' => 0,
+                    'url' => "figma-image://{$node_id}",
+                ];
+            }
+        }
+
+        if (empty($gallery_settings->wp_gallery)) {
+            return null;
+        }
+
+        $gallery_settings->_css_classes = 'figma-detected-gallery';
+        $gallery_settings->gallery_columns = 4;
+        $gallery_settings->link_to = 'file';
+        $gallery_settings->open_lightbox = 'yes';
+
+        return [
+            'id' => $this->generate_id(),
+            'elType' => 'widget',
+            'widgetType' => 'image-gallery',
+            'isInner' => false,
+            'settings' => $gallery_settings,
+            'elements' => [],
+        ];
+    }
+
+    /**
+     * Collect all TEXT node references within $max_depth levels of a node.
+     *
+     * Depth 0 = check $node itself.
+     * Depth 2 = also check children and grandchildren.
+     *
+     * @return array Array of raw Figma TEXT node arrays.
+     */
+    private function find_text_nodes_in_subtree(array $node, int $max_depth = 2): array {
+        if ($max_depth < 0) {
+            return [];
+        }
+
+        $texts = [];
+        $figma_type = $node['type'] ?? '';
+        if ($figma_type === 'TEXT') {
+            $texts[] = $node;
+        }
+
+        if ($max_depth > 0) {
+            foreach ($node['children'] ?? [] as $child) {
+                $texts = array_merge($texts, $this->find_text_nodes_in_subtree($child, $max_depth - 1));
+            }
+        }
+
+        return $texts;
     }
 
     // ── Template Wrapper ──

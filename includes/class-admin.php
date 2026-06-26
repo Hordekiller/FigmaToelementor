@@ -16,7 +16,15 @@ class Admin {
     public function init(): void {
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_init', [$this, 'handle_form_submissions']);
+        add_action('admin_init', [$this, 'handle_style_sync_form']);
         add_action('admin_init', [$this, 'handle_ajax_actions']);
+    }
+
+    public function handle_style_sync_form(): void {
+        if (!isset($_GET['page']) || $_GET['page'] !== 'hello-figma-style-sync') {
+            return;
+        }
+        $this->plugin->get_style_sync()->handle_form_submission();
     }
 
     public function register_admin_menu(): void {
@@ -79,7 +87,6 @@ class Admin {
     }
 
     public function render_style_sync(): void {
-        $this->plugin->get_style_sync()->handle_form_submission();
         include HELLO_FIGMA_PATH . 'admin/views/style-sync.php';
     }
 
@@ -144,12 +151,15 @@ class Admin {
         add_action('wp_ajax_hello_figma_sync_styles', [$this, 'ajax_sync_styles']);
         add_action('wp_ajax_hello_figma_fetch_structure', [$this, 'ajax_fetch_structure']);
         add_action('wp_ajax_hello_figma_fetch_frame_images', [$this, 'ajax_fetch_frame_images']);
+        add_action('wp_ajax_hello_figma_preview_sections', [$this, 'ajax_preview_sections']);
+        add_action('wp_ajax_hello_figma_import_progress', [$this, 'ajax_import_progress']);
     }
 
     public function ajax_convert(): void {
         $this->verify_ajax();
 
-        Logger::start_run(uniqid('figma_import_'));
+        $run_id = uniqid('figma_import_');
+        Logger::start_run($run_id);
 
         Logger::log('INFO', 'Admin', 'Import started', [
             'file_key' => $this->get_file_key_from_post('file_key'),
@@ -162,36 +172,69 @@ class Admin {
         $node_id = sanitize_text_field($_POST['node_id'] ?? '');
         $title = sanitize_text_field($_POST['title'] ?? __('Figma Import', 'hello-figma'));
         $format = sanitize_text_field($_POST['format'] ?? 'post');
+        $file_name = sanitize_text_field($_POST['file_name'] ?? '');
+
+        $overrides = [];
+        if (!empty($_POST['overrides'])) {
+            $decoded = json_decode(wp_unslash($_POST['overrides']), true);
+            if (is_array($decoded)) {
+                $overrides = $decoded;
+            } else {
+                Logger::log('WARNING', 'Admin', 'Invalid overrides JSON', [
+                    'raw' => $_POST['overrides'],
+                ]);
+            }
+        }
 
         if (empty($file_key)) {
             wp_send_json_error(['message' => __('File key is required.', 'hello-figma')]);
         }
 
-        $elementor_data = $this->plugin->get_renderer()->convert_file($file_key, $node_id ?: null);
+        $this->set_import_progress($run_id, __('Fetching design from Figma...', 'hello-figma'), 10);
+
+        $elementor_data = $this->plugin->get_renderer()->convert_file($file_key, $node_id ?: null, $overrides);
         if ($elementor_data === null) {
             wp_send_json_error(['message' => __('Failed to convert Figma file.', 'hello-figma')]);
         }
 
-        // Resolve figma-image:// placeholders to real WordPress attachments
-        $elementor_data = $this->plugin->get_image_handler()->resolve_image_placeholders($file_key, $elementor_data);
+        $this->set_import_progress($run_id, __('Converting sections...', 'hello-figma'), 30);
 
-        // format=json: return raw template data (for JS API / editor.js)
+        $total_images = $this->count_image_placeholders($elementor_data);
+
+        $this->set_import_progress($run_id, __('Downloading images from Figma...', 'hello-figma'), 40, 0, $total_images);
+
+        $elementor_data = $this->plugin->get_image_handler()->resolve_image_placeholders(
+            $file_key,
+            $elementor_data,
+            function (int $current, int $total) use ($run_id): void {
+                $this->set_import_progress($run_id, __('Downloading images from Figma...', 'hello-figma'), 40, $current, $total);
+            }
+        );
+
         if ($format === 'json') {
+            $this->set_import_progress($run_id, __('Done', 'hello-figma'), 100);
             wp_send_json_success([
                 'template' => $elementor_data,
             ]);
         }
 
-        // format=post: save as Elementor template post (default)
+        $this->set_import_progress($run_id, __('Saving template...', 'hello-figma'), 80);
+
         $post_id = $this->plugin->get_template_manager()->save_template(
             $elementor_data,
             $title,
-            $file_key
+            $file_key,
+            'page',
+            $title,
+            $file_name
         );
 
         if (is_wp_error($post_id)) {
+            $this->clear_import_progress($run_id);
             wp_send_json_error(['message' => $post_id->get_error_message()]);
         }
+
+        $this->set_import_progress($run_id, __('Import complete!', 'hello-figma'), 100);
 
         wp_send_json_success([
             'post_id' => $post_id,
@@ -201,6 +244,45 @@ class Admin {
                 admin_url('post.php')
             ),
         ]);
+    }
+
+    public function ajax_import_progress(): void {
+        $this->verify_ajax_readonly();
+
+        $run_id = sanitize_text_field($_POST['run_id'] ?? '');
+        if (empty($run_id)) {
+            wp_send_json_error(['message' => 'No run ID provided.']);
+        }
+
+        $progress = get_transient('hello_figma_import_progress_' . $run_id);
+        if ($progress === false) {
+            wp_send_json_error(['message' => 'No progress data.']);
+        }
+
+        wp_send_json_success($progress);
+    }
+
+    private function set_import_progress(string $run_id, string $stage, int $percentage, int $current = 0, int $total = 0): void {
+        set_transient('hello_figma_import_progress_' . $run_id, [
+            'stage' => $stage,
+            'percentage' => $percentage,
+            'current' => $current,
+            'total' => $total,
+        ], 5 * MINUTE_IN_SECONDS);
+    }
+
+    private function clear_import_progress(string $run_id): void {
+        delete_transient('hello_figma_import_progress_' . $run_id);
+    }
+
+    private function count_image_placeholders(array $data): int {
+        $count = 0;
+        array_walk_recursive($data, function ($value) use (&$count): void {
+            if (is_string($value) && str_starts_with($value, 'figma-image://')) {
+                $count++;
+            }
+        });
+        return $count;
     }
 
     public function ajax_delete_template(): void {
@@ -264,8 +346,16 @@ class Admin {
             wp_send_json_error(['message' => __('No Figma file key configured.', 'hello-figma')]);
         }
 
-        $colors = $this->plugin->get_style_sync()->sync_colors($file_key);
-        $typography = $this->plugin->get_style_sync()->sync_typography($file_key);
+        $type = sanitize_text_field($_POST['type'] ?? 'all');
+        $colors = [];
+        $typography = [];
+
+        if (in_array($type, ['all', 'colors'], true)) {
+            $colors = $this->plugin->get_style_sync()->sync_colors($file_key);
+        }
+        if (in_array($type, ['all', 'typography'], true)) {
+            $typography = $this->plugin->get_style_sync()->sync_typography($file_key);
+        }
 
         wp_send_json_success([
             'colors' => $colors,
@@ -324,11 +414,36 @@ class Admin {
         wp_send_json_success(['images' => $images]);
     }
 
+    public function ajax_preview_sections(): void {
+        $this->verify_ajax();
+
+        $file_key = $this->get_file_key_from_post('file_key');
+        $node_id = sanitize_text_field($_POST['node_id'] ?? '');
+
+        if (empty($file_key) || empty($node_id)) {
+            wp_send_json_error(['message' => __('File key and node ID are required.', 'hello-figma')]);
+        }
+
+        $sections = $this->plugin->get_renderer()->get_sections_preview($file_key, $node_id);
+
+        if ($sections === null) {
+            wp_send_json_error(['message' => __('Failed to preview sections.', 'hello-figma')]);
+        }
+
+        wp_send_json_success(['sections' => $sections]);
+    }
+
     private function verify_ajax(): void {
         if (!wp_verify_nonce($_POST['nonce'] ?? '', 'hello_figma_nonce')) {
             wp_send_json_error(['message' => __('Security check failed.', 'hello-figma')]);
         }
 
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma')]);
+        }
+    }
+
+    private function verify_ajax_readonly(): void {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma')]);
         }

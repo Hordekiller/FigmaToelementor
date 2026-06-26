@@ -14,14 +14,14 @@ class Figma_API {
     private ?string $token = null;
 
     public function __construct() {
-        $this->token = get_option(self::TOKEN_OPTION, '');
+        $stored = get_option(self::TOKEN_OPTION, '');
+        $this->token = $this->decrypt_token($stored);
     }
 
     public function set_token(string $token): void {
         $this->token = $token;
-        update_option(self::TOKEN_OPTION, $token);
+        update_option(self::TOKEN_OPTION, $this->encrypt_token($token));
 
-        // Track token creation for expiry notices (90-day PAT policy)
         if (!get_option('hello_figma_token_created_at', 0)) {
             update_option('hello_figma_token_created_at', time());
         }
@@ -33,6 +33,38 @@ class Figma_API {
 
     public function has_token(): bool {
         return !empty($this->token);
+    }
+
+    private function encrypt_token(string $plaintext): string {
+        if ($plaintext === '') {
+            return '';
+        }
+        $key = wp_salt('AUTH_KEY');
+        $iv = openssl_random_pseudo_bytes(16);
+        $ciphertext = openssl_encrypt($plaintext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        return base64_encode($iv . $ciphertext);
+    }
+
+    private function decrypt_token(string $ciphertext_b64): string {
+        if ($ciphertext_b64 === '') {
+            return '';
+        }
+
+        $data = base64_decode($ciphertext_b64, true);
+        if ($data === false || strlen($data) < 16) {
+            return $ciphertext_b64;
+        }
+
+        $iv = substr($data, 0, 16);
+        $ciphertext = substr($data, 16);
+        $key = wp_salt('AUTH_KEY');
+        $decrypted = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+
+        if ($decrypted === false) {
+            return $ciphertext_b64;
+        }
+
+        return $decrypted;
     }
 
     /**
@@ -64,7 +96,8 @@ class Figma_API {
 
         $data = $this->request($endpoint);
         if ($data !== null) {
-            set_transient($cache_key, $data, self::CACHE_TTL);
+            $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'file');
+            set_transient($cache_key, $data, $ttl);
         }
 
         return $data;
@@ -91,7 +124,8 @@ class Figma_API {
 
         $data = $this->request("files/{$file_key}/nodes?" . http_build_query(['ids' => $ids]));
         if ($data !== null) {
-            set_transient($cache_key, $data, self::CACHE_TTL);
+            $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'nodes');
+            set_transient($cache_key, $data, $ttl);
         }
 
         return $data;
@@ -112,7 +146,8 @@ class Figma_API {
 
         $data = $this->request("files/{$file_key}/styles");
         if ($data !== null) {
-            set_transient($cache_key, $data, HOUR_IN_SECONDS * 2);
+            $ttl = apply_filters('hello_figma_cache_ttl', HOUR_IN_SECONDS * 2, 'styles');
+            set_transient($cache_key, $data, $ttl);
         }
 
         return $data;
@@ -144,7 +179,8 @@ class Figma_API {
             'scale' => 2,
         ]));
         if ($data !== null && isset($data['images'])) {
-            set_transient($cache_key, $data['images'], self::CACHE_TTL);
+            $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'images');
+            set_transient($cache_key, $data['images'], $ttl);
             return $data['images'];
         }
 
@@ -166,7 +202,8 @@ class Figma_API {
 
         $data = $this->request("files/{$file_key}/variables/local");
         if ($data !== null) {
-            set_transient($cache_key, $data, HOUR_IN_SECONDS * 2);
+            $ttl = apply_filters('hello_figma_cache_ttl', HOUR_IN_SECONDS * 2, 'variables');
+            set_transient($cache_key, $data, $ttl);
         }
 
         return $data;
@@ -187,7 +224,8 @@ class Figma_API {
 
         $data = $this->request("teams/{$team_id}/styles");
         if ($data !== null) {
-            set_transient($cache_key, $data, HOUR_IN_SECONDS * 4);
+            $ttl = apply_filters('hello_figma_cache_ttl', HOUR_IN_SECONDS * 4, 'team_styles');
+            set_transient($cache_key, $data, $ttl);
         }
 
         return $data;
@@ -223,7 +261,7 @@ class Figma_API {
                 'X-Figma-Token' => $this->token,
                 'Content-Type' => 'application/json',
             ],
-            'timeout' => 60,
+            'timeout' => apply_filters('hello_figma_api_timeout', 120),
         ]);
 
         if (is_wp_error($response)) {
@@ -338,7 +376,7 @@ class Figma_API {
             'headers' => [
                 'X-Figma-Token' => $this->token,
             ],
-            'timeout' => 10,
+            'timeout' => apply_filters('hello_figma_api_timeout', 15),
         ]);
 
         if (is_wp_error($response)) {
@@ -346,6 +384,53 @@ class Figma_API {
         }
 
         return wp_remote_retrieve_response_code($response) === 200;
+    }
+
+    /**
+     * Get low-resolution thumbnail URLs for preview purposes.
+     *
+     * Uses scale=1 (smaller/faster) and format=png. Batch-requests all node IDs
+     * in a single API call.
+     *
+     * @param string $file_key Figma file key
+     * @param array  $node_ids Array of node IDs to export
+     * @return array Map of node_id => thumbnail_url (empty array on failure)
+     */
+    public function get_thumbnail_urls(string $file_key, array $node_ids): array {
+        if (empty($node_ids)) {
+            return [];
+        }
+
+        $ids = implode(',', $node_ids);
+        $cache_key = 'hello_figma_thumb_' . $file_key . '_' . md5($ids);
+        $cached = get_transient($cache_key);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        Logger::log('INFO', 'FigmaAPI', 'Fetching thumbnail URLs', [
+            'file_key' => $file_key,
+            'node_count' => count($node_ids),
+        ]);
+
+        $data = $this->request("images/{$file_key}?" . http_build_query([
+            'ids' => $ids,
+            'format' => 'png',
+            'scale' => 1,
+        ]));
+
+        if ($data !== null && isset($data['images'])) {
+            $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'thumbnail');
+            set_transient($cache_key, $data['images'], $ttl);
+            return $data['images'];
+        }
+
+        Logger::log('WARNING', 'FigmaAPI', 'get_thumbnail_urls failed', [
+            'file_key' => $file_key,
+            'node_ids' => $node_ids,
+        ]);
+
+        return [];
     }
 
     /**

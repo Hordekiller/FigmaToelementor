@@ -1,9 +1,19 @@
 (function ($) {
     'use strict';
 
+    const persianLabels = {
+        slider: 'اسلایدر',
+        carousel: 'کاروسل',
+        faq: 'سوالات متداول',
+        gallery: 'گالری',
+        container: 'عمومی',
+    };
+
     const helloFigma = {
         currentFileKey: '',
         currentCanvases: [],
+        currentNodeId: '',
+        currentFrameName: '',
 
         init() {
             this.bindEvents();
@@ -24,6 +34,11 @@
             $('#hello-figma-sync-typography').on('click', (e) => this.syncStyles('typography', e));
             $('#hello-figma-sync-all').on('click', (e) => this.syncStyles('all', e));
             $('#step-3-import-another').on('click', () => this.resetWizard());
+            $('#hello-figma-confirm-import').on('click', this.confirmImport.bind(this));
+            $('#hello-figma-back-to-frames').on('click', () => {
+                $('#step-2-review').hide();
+                $('#step-2').show();
+            });
         },
 
         // ── Step 1: Load File ──
@@ -176,35 +191,195 @@
             });
         },
 
-        // ── Step 3: Import ──
+        // ── Step 2.5: Review Sections ──
 
         importFrame(nodeId, name) {
+            this.currentNodeId = nodeId;
+            this.currentFrameName = name;
+
             $('#step-2').hide();
             $('#hello-figma-convert-progress').show();
 
+            $.post(ajaxurl, {
+                action: 'hello_figma_preview_sections',
+                nonce: helloFigmaData.nonce,
+                file_key: this.currentFileKey,
+                node_id: nodeId
+            }, (response) => {
+                $('#hello-figma-convert-progress').hide();
+                if (response.success && response.data.sections && response.data.sections.length > 0) {
+                    this.renderReviewSections(response.data.sections);
+                } else {
+                    // No sections to review or preview failed — go straight to import
+                    this.doImport(nodeId, name, {});
+                }
+            }).fail(() => {
+                $('#hello-figma-convert-progress').hide();
+                this.showError('step-1', 'Failed to load section preview. Please try again.');
+                $('#step-1').show();
+            });
+        },
+
+        renderReviewSections(sections) {
+            const grid = $('#hello-figma-review-grid');
+            grid.empty();
+
+            const row = $('<div class="figma-section-row"></div>');
+
+            $.each(sections, (i, section) => {
+                const suggestion = section.suggested_type || 'container';
+                const isAutoDetected = ['slider', 'carousel', 'faq', 'gallery'].indexOf(suggestion) !== -1;
+
+                const autoLabel = 'تشخیص خودکار (' + (persianLabels[suggestion] || suggestion) + ')';
+
+                const card = $(
+                    '<div class="figma-section-card" data-section-id="' + section.id + '">' +
+                        '<div class="figma-section-preview">' +
+                            (section.thumbnail_url
+                                ? '<img src="' + section.thumbnail_url + '" alt="" loading="lazy">'
+                                : '<div class="figma-section-placeholder"><span>' + this.escHtml(section.name) + '</span></div>') +
+                        '</div>' +
+                        '<div class="figma-section-info">' +
+                            '<strong class="figma-section-name">' + this.escHtml(section.name) + '</strong>' +
+                        '</div>' +
+                        '<div class="figma-section-controls">' +
+                            '<select class="figma-section-type-select">' +
+                                '<option value="auto">' + autoLabel + '</option>' +
+                                '<option value="container">' + persianLabels.container + ' (بدون تبدیل خاص)</option>' +
+                                '<option value="slider">Slider</option>' +
+                                '<option value="carousel">Carousel</option>' +
+                                '<option value="faq">FAQ (Accordion)</option>' +
+                                '<option value="gallery">Gallery</option>' +
+                            '</select>' +
+                        '</div>' +
+                    '</div>'
+                );
+
+                if (isAutoDetected) {
+                    card.find('.figma-section-type-select').val(suggestion);
+                }
+
+                row.append(card);
+            });
+
+            grid.append(row);
+            $('#step-2-review-error').hide();
+            $('#step-2-review').show();
+        },
+
+        confirmImport() {
+            const overrides = {};
+            $('#hello-figma-review-grid .figma-section-card').each(function () {
+                const sectionId = $(this).data('section-id');
+                const selected = $(this).find('.figma-section-type-select').val();
+                if (selected !== 'auto') {
+                    overrides[sectionId] = selected;
+                }
+            });
+
+            $('#step-2-review').hide();
+            $('#hello-figma-convert-progress').show();
+            this.doImport(this.currentNodeId, this.currentFrameName, overrides);
+        },
+
+        doImport(nodeId, name, overrides) {
             const title = name || 'Figma Import';
 
-            $.post(ajaxurl, {
+            const data = {
                 action: 'hello_figma_convert',
                 nonce: helloFigmaData.nonce,
                 file_key: this.currentFileKey,
                 node_id: nodeId,
-                title: title
-            }, (response) => {
-                $('#hello-figma-convert-progress').hide();
+                title: title,
+                run_id: 'figma_import_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
+            };
+
+            if (Object.keys(overrides).length > 0) {
+                data.overrides = JSON.stringify(overrides);
+            }
+
+            this.showProgress(data.run_id);
+
+            $.post(ajaxurl, data, (response) => {
+                this.stopProgress();
                 if (response.success) {
-                    $('#step-3-message').text('"' + title + '" has been imported successfully.');
-                    $('#step-3-edit-link').attr('href', response.data.edit_url);
-                    $('#step-3').show();
+                    this.setProgressStage(100, 'Import complete!', 0, 0);
+                    setTimeout(() => {
+                        $('#hello-figma-convert-progress').hide();
+                        $('#step-3-message').text('"' + title + '" has been imported successfully.');
+                        $('#step-3-edit-link').attr('href', response.data.edit_url);
+                        $('#step-3').show();
+                    }, 500);
                 } else {
+                    this.setProgressStage(0, '', 0, 0);
+                    $('#hello-figma-convert-progress').hide();
                     this.showError('step-1', response.data.message || 'Conversion failed.');
                     $('#step-1').show();
                 }
             }).fail(() => {
+                this.stopProgress();
+                this.setProgressStage(0, '', 0, 0);
                 $('#hello-figma-convert-progress').hide();
                 this.showError('step-1', 'Server error during conversion.');
                 $('#step-1').show();
             });
+        },
+
+        // ── Progress Bar ──
+
+        progressTimer: null,
+        progressRunId: '',
+
+        showProgress(runId) {
+            this.progressRunId = runId;
+            this.setProgressStage(5, 'Starting import...', 0, 0);
+            $('#hello-figma-convert-progress').show();
+            this.progressTimer = setInterval(() => this.pollProgress(), 1500);
+        },
+
+        stopProgress() {
+            if (this.progressTimer) {
+                clearInterval(this.progressTimer);
+                this.progressTimer = null;
+            }
+            this.progressRunId = '';
+        },
+
+        pollProgress() {
+            if (!this.progressRunId) return;
+
+            $.post(ajaxurl, {
+                action: 'hello_figma_import_progress',
+                nonce: helloFigmaData.nonce,
+                run_id: this.progressRunId
+            }, (response) => {
+                if (response.success && response.data) {
+                    this.setProgressStage(
+                        response.data.percentage,
+                        response.data.stage,
+                        response.data.current || 0,
+                        response.data.total || 0
+                    );
+                }
+            });
+        },
+
+        setProgressStage(percentage, stage, current, total) {
+            const bar = $('#hello-figma-progress-bar');
+            const label = $('#hello-figma-progress-label');
+            const detail = $('#hello-figma-progress-detail');
+
+            bar.css('width', percentage + '%').attr('aria-valuenow', percentage);
+
+            if (stage) {
+                label.text(stage);
+            }
+
+            if (total > 0 && current > 0) {
+                detail.text(current + ' / ' + total);
+            } else {
+                detail.text('');
+            }
         },
 
         resetWizard() {
@@ -212,6 +387,7 @@
             $('#hello-figma-convert-progress').hide();
             $('#step-1').show();
             $('#step-2').hide();
+            $('#step-2-review').hide();
             $('#step-1-error').hide();
             $('#figma-file-key-input').val(this.currentFileKey);
         },

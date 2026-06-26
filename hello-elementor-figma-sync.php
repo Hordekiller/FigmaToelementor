@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Plugin Name:     Figma to Elementor
  * Plugin URI:      https://github.com/Hordekiller/FigmaToelementor
  * Description:     Convert Figma designs into Elementor templates with full style preservation. Supports Flexbox Containers, typography, colors, gradients, and more.
- * Version:         1.1.0
+ * Version:         1.2.0
  * Author:          Hordekiller
  * Author URI:      https://github.com/Hordekiller
  * Text Domain:     hello-figma

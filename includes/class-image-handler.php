@@ -54,10 +54,14 @@ class Image_Handler {
      * @param string $format Export format
      * @return array Map of node_id => attachment_id|\WP_Error
      */
+    /**
+     * @param callable|null $progress_callback Optional. Called with (int $current, int $total) per image.
+     */
     public function batch_download_images(
         string $file_key,
         array $node_ids,
-        string $format = 'png'
+        string $format = 'png',
+        ?callable $progress_callback = null
     ): array {
         $ids = array_keys($node_ids);
         $images = $this->figma_api->get_images($file_key, $ids, $format);
@@ -70,7 +74,13 @@ class Image_Handler {
         }
 
         $results = [];
+        $image_idx = 0;
+        $total = count($images);
         foreach ($images as $node_id => $image_url) {
+            $image_idx++;
+            if ($progress_callback !== null) {
+                $progress_callback($image_idx, $total);
+            }
             Logger::log('INFO', 'ImageHandler', 'Resolving image', [
                 'ref_or_node_id' => $node_id,
                 'file_key' => $file_key,
@@ -124,7 +134,10 @@ class Image_Handler {
      *
      * @return array The data with all placeholders replaced.
      */
-    public function resolve_image_placeholders(string $file_key, array $data): array {
+    /**
+     * @param callable|null $progress_callback Optional. Called with (int $current, int $total) per image.
+     */
+    public function resolve_image_placeholders(string $file_key, array $data, ?callable $progress_callback = null): array {
         $node_ids = $this->collect_placeholder_ids($data);
         if (empty($node_ids)) {
             Logger::log('INFO', 'ImageHandler', 'No image placeholders found in converted data');
@@ -141,7 +154,7 @@ class Image_Handler {
             $name_map[$id] = $id;
         }
 
-        $results = $this->batch_download_images($file_key, $name_map, 'png');
+        $results = $this->batch_download_images($file_key, $name_map, 'png', $progress_callback);
 
         $resolved = [];
         $failures = 0;
