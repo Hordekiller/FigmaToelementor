@@ -58,6 +58,7 @@ Convert Figma designs directly into editable Elementor templates. Full style pre
 * **Rotated absolute-positioned nodes skipped** — Nodes with rotation > 0.01° in an absolute-position context are excluded.
 * **No Figma Variables → CSS custom properties** — Figma Variables sync is planned for a future release.
 * **No two-way sync** — Changes made in Elementor cannot be pushed back to Figma.
+* **No responsive breakpoints from Figma** — Breakpoints are not derived from Figma variants.
 * **Not on WordPress.org Plugin Directory** — Install via GitHub Releases until directory submission is complete.
 
 == Frequently Asked Questions ==
