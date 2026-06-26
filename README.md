@@ -36,18 +36,22 @@ No manual duplication. No pixel-guessing. Just **design → publish**.
 ## Features
 
 | Feature | Description |
-|---|---|
-| **One-click Import** | Paste any Figma URL — file key extracted automatically |
+|---|---|---|
+| **One-click Import** | Paste any Figma URL — auto-extracts file key, loads frames |
 | **Frame Browser** | Browse frames with live preview thumbnails |
-| **Component Breakdown** | Each section (header, hero, footer) → independent Elementor container |
-| **Full Style Mapping** | Colors, borders, gradients, shadows, opacity — all preserved |
-| **Typography** | Font family, size, weight, line height, letter spacing, transforms |
-| **Container-native** | Built for Elementor Flexbox Containers |
-| **Gradient Support** | Linear gradients with accurate color stops |
-| **Image Mapping** | Background images from Figma fills |
-| **Style Sync** | Figma colors/typography → Elementor Global Colors/Fonts |
-| **Editor Integration** | Import via `$e.run()` inside Elementor editor |
-| **URL Parsing** | Full Figma URLs accepted — no need to extract file key manually |
+| **Section Review** | Review detected sections before import |
+| **Smart Widget Conversion** | FAQ→Accordion, Gallery→Basic Gallery, Carousel→Image Carousel |
+| **Component Detection** | Auto-detects 18 component types from layer names (English + Persian) |
+| **Full Style Mapping** | Colors, borders, gradients, shadows, opacity, typography |
+| **Absolute Positioning** | Figma absolute positioning preserved in Elementor |
+| **Gradients** | Linear and radial gradients with accurate color stops |
+| **Image Handling** | Background fills, auto-download & attachment |
+| **Global Style Sync** | Figma styles → Elementor Global Colors/Fonts |
+| **Token Security** | PAT encrypted at rest via AUTH_KEY-derived AES-256 |
+| **Progress Feedback** | Real-time import progress bar |
+| **Per-side Borders** | Individual top/right/bottom/left stroke widths |
+| **Dynamic Tags** | Elementor Pro dynamic tags for Figma text/fields |
+| **Cache Management** | Configurable TTL with manual flush |
 | **RTL Support** | Full Persian (Farsi) localization included |
 
 ---
@@ -186,6 +190,20 @@ FigmaToelementor/
 
 ---
 
+## Known Limitations
+
+| Limitation | Impact |
+|---|---|
+| **No bulk import** | Frames are imported one at a time. Batch select is planned. |
+| **Radial / angular / diamond gradients approximated** | Elementor only supports linear gradients natively; other types are mapped to the closest equivalent. |
+| **Rotated absolute-positioned nodes skipped** | Nodes with rotation > 0.01° within an absolute-position context are excluded (requires full relativeTransform matrix). |
+| **No Figma Variables → CSS custom properties** | Figma Variables are not yet synced. Planned for a future release. |
+| **No two-way sync** | Changes made in Elementor cannot be pushed back to Figma. |
+| **No responsive breakpoints from Figma** | Breakpoints are not derived from Figma variants. |
+| **Not on WordPress.org Plugin Directory** | Install via GitHub Releases until directory submission is complete. |
+
+---
+
 ## Contributing
 
 **All development happens on this repository.** No separate distributions, rebranded forks, or standalone versions. Contribute here so everyone benefits.
@@ -209,7 +227,8 @@ git checkout -b feature/your-feature
 |---|---|
 | Use on any WordPress site | Distribute without source code |
 | Modify for your own needs | Incorporate into proprietary software |
-| Share copies with license | Create standalone forks or rebranded versions |
+| Share copies with license | Remove or change the license |
+| Fork and improve (must stay GPL) | Misrepresent authorship |
 
 All contributions are licensed under the same GPLv2+ terms. Copyright 2026.
 

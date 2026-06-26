@@ -4,7 +4,7 @@ Tags: figma, elementor, hello-elementor, figma to elementor, template converter,
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.3.0
 Copyright: 2026 Hordekiller
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,16 +17,22 @@ Convert Figma designs directly into editable Elementor templates. Full style pre
 
 = Key Features =
 
-* **One-Click Import** — Paste any Figma URL, auto-extracts the file key.
-* **Full Style Mapping** — Colors, typography, borders, gradients, shadows, opacity — all preserved.
-* **Component Breakdown** — Each section becomes an independently editable Elementor container.
-* **Container-native** — Built for Elementor Flexbox Containers.
-* **Typography Preserved** — Font family, size, weight, line height, letter spacing, transforms.
-* **Gradient Support** — Linear gradients with accurate color stops.
-* **Global Style Sync** — Sync Figma color and typography styles to Elementor global settings.
-* **Editor Integration** — Import directly inside Elementor editor via `$e.run()` commands.
-* **Template Library** — Save, manage, export, and re-use imported templates.
-* **RTL Support** — Full Persian/Arabic language support.
+* **One-Click Import** — Paste any Figma URL — auto-extracts file key, loads frames.
+* **Frame Browser** — Browse frames with live preview thumbnails.
+* **Section Review** — Review detected sections before import.
+* **Smart Widget Conversion** — FAQ→Accordion, Gallery→Basic Gallery, Carousel→Image Carousel.
+* **Component Detection** — Auto-detects 18 component types from layer names (English + Persian).
+* **Full Style Mapping** — Colors, borders, gradients, shadows, opacity, typography — all preserved.
+* **Absolute Positioning** — Figma absolute positioning preserved in Elementor.
+* **Gradient Support** — Linear and radial gradients with accurate color stops.
+* **Image Handling** — Background fills, auto-download and attachment.
+* **Global Style Sync** — Figma styles → Elementor Global Colors/Fonts.
+* **Token Security** — PAT encrypted at rest via AUTH_KEY-derived AES-256.
+* **Progress Feedback** — Real-time import progress bar.
+* **Per-side Borders** — Individual top/right/bottom/left stroke widths.
+* **Dynamic Tags** — Elementor Pro dynamic tags for Figma text/fields.
+* **Cache Management** — Configurable TTL with manual flush.
+* **RTL Support** — Full Persian (Farsi) localization included.
 
 = How It Works =
 
@@ -44,6 +50,15 @@ Convert Figma designs directly into editable Elementor templates. Full style pre
 4. Go to the new "Figma Sync" menu in your admin dashboard.
 5. Enter your Figma Personal Access Token in Settings.
 6. Paste a Figma URL and start converting!
+
+== Known Limitations ==
+
+* **No bulk import** — Frames are imported one at a time. Batch select is planned.
+* **Radial/angular/diamond gradients approximated** — Elementor only supports linear gradients natively; unsupported types are mapped to the closest equivalent.
+* **Rotated absolute-positioned nodes skipped** — Nodes with rotation > 0.01° in an absolute-position context are excluded.
+* **No Figma Variables → CSS custom properties** — Figma Variables sync is planned for a future release.
+* **No two-way sync** — Changes made in Elementor cannot be pushed back to Figma.
+* **Not on WordPress.org Plugin Directory** — Install via GitHub Releases until directory submission is complete.
 
 == Frequently Asked Questions ==
 
@@ -68,6 +83,37 @@ Yes. All imported templates are fully editable in Elementor — every widget, st
 Yes. Full RTL support with Persian translation included.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: Absolute positioning — Figma absoluteBoundingBox converted to Elementor position:absolute
+* New: FAQ → Accordion widget conversion with Q&A pair detection
+* New: Gallery → Basic Gallery widget conversion with image resolution
+* New: Slider/Carousel → Image Carousel widget conversion (≥70% image fill threshold)
+* New: Section Review screen — preview frames with detected component types before import
+* New: Progress bar with real-time status updates during import
+* New: Per-side stroke/border width mapping (top/right/bottom/left)
+* New: Dynamic Tags for Elementor Pro (Figma text + field values)
+* Enhancement: Token encrypted at rest using AUTH_KEY-derived AES-256
+* Enhancement: Structured logging via centralized Logger class
+* Enhancement: Cache TTL configurable via hello_figma_cache_ttl filter
+* Enhancement: Manual cache flush button in admin settings
+* Enhancement: Image auto-download and attachment via Image_Handler
+* Enhancement: Radial gradient type detection (mapped to Elementor radial)
+* Enhancement: Angular/diamond gradient types mapped to linear fallback
+* Enhancement: Asset_Manager for centralized script/style registration
+* Enhancement: Compatibility checks for plugin environment
+* Docs: Updated README.md features and added Known Limitations
+* Lint: phpcs.xml + phpstan.neon configuration files
+
+= 1.2.1 =
+* Fix: Uninstall cleaner — properly removes plugin options on uninstall
+* Chore: Version constant synced across all files
+
+= 1.2.0 =
+* New: Component detection from layer names — 18 patterns (English + Persian)
+* New: CSS class auto-tagging based on detected component type (figma-detected-{type})
+* Enhancement: Conservative carousel detection (≥70% image fill threshold)
+* Enhancement: Depth-limited recursive image search for nested Figma groups
 
 = 1.1.0 =
 * New: Component detection from layer names — 18 patterns (English + Persian)
