@@ -320,12 +320,11 @@ class Elementor_Renderer {
 
         // Recursively convert children (pass this node's layoutMode for their sizing)
         $node_layout_mode = $node['layoutMode'] ?? null;
-        $parent_bbox = $node['absoluteBoundingBox'] ?? null;
         foreach ($node['children'] ?? [] as $child) {
             $converted = $this->convert_node($child, $node_layout_mode);
             if ($converted !== null) {
-                if ($parent_bbox !== null && $this->should_position_absolute($child, $node_layout_mode)) {
-                    $this->apply_absolute_positioning($converted, $child, $parent_bbox);
+                if ($this->node_needs_absolute_positioning($child, $node_layout_mode)) {
+                    $this->apply_absolute_positioning($converted, $child, $node);
                 }
                 $element['elements'][] = $converted;
             }
@@ -335,13 +334,22 @@ class Elementor_Renderer {
     }
 
     /**
-     * Determine if a child node should be absolutely positioned in Elementor.
+     * Determine if a child node needs absolute positioning in Elementor.
      *
      * Two scenarios:
-     * 1. Parent has NO auto-layout (layoutMode is null) → ALL children are absolute.
-     * 2. Parent has auto-layout but child.layoutPositioning === 'ABSOLUTE'.
+     * 1. Parent has NO auto-layout (layoutMode is null) → all children are absolute.
+     * 2. Parent has auto-layout and child.layoutPositioning === 'ABSOLUTE'.
+     *
+     * Rotated nodes (abs(rotation) > 0.01) are excluded — computing position for
+     * rotated absolute nodes requires the full relativeTransform matrix (deferred).
      */
-    private function should_position_absolute(array $child, ?string $parent_layout_mode): bool {
+    private function node_needs_absolute_positioning(array $child, ?string $parent_layout_mode): bool {
+        // Skip rotated nodes — their position requires the full relativeTransform
+        // matrix calculation, not just x/y (deferred to a future task).
+        if (isset($child['rotation']) && abs((float) $child['rotation']) > 0.01) {
+            return false;
+        }
+
         if ($parent_layout_mode === null) {
             return true;
         }
@@ -349,68 +357,103 @@ class Elementor_Renderer {
     }
 
     /**
-     * Apply Elementor absolute positioning controls to a converted child element
-     * based on its relative position within the parent frame.
+     * Compute the relative position of a child within its parent.
      *
-     * Field names (source-verified from Elementor source code):
-     *   Widgets: _position, Containers: position
-     *   Common: _offset_orientation_h, _offset_x, _offset_x_end,
-     *           _offset_orientation_v, _offset_y, _offset_y_end
+     * Formula: relative = child.absoluteBoundingBox - parent.absoluteBoundingBox
+     * This works correctly even when absoluteBoundingBox values are negative
+     * (relative to canvas center), because both values share the same origin.
      *
-     * @see https://elementor.com/help/how-to-set-absolute-position-for-an-element/
-     * @see elementor/includes/widgets/common-base.php
-     * @see elementor/includes/elements/container.php
+     * @return array{ x: float, y: float }|null
      */
-    private function apply_absolute_positioning(array &$element, array $child, array $parent_bbox): void {
-        $child_bbox = $child['absoluteBoundingBox'] ?? null;
-        if ($child_bbox === null) {
+    private function compute_relative_position(array $child_node, array $parent_node): ?array {
+        $child_bbox = $child_node['absoluteBoundingBox'] ?? null;
+        $parent_bbox = $parent_node['absoluteBoundingBox'] ?? null;
+        if ($child_bbox === null || $parent_bbox === null) {
+            return null;
+        }
+
+        return [
+            'x' => ($child_bbox['x'] ?? 0) - ($parent_bbox['x'] ?? 0),
+            'y' => ($child_bbox['y'] ?? 0) - ($parent_bbox['y'] ?? 0),
+        ];
+    }
+
+    /**
+     * Apply Elementor absolute positioning controls to a converted child element.
+     *
+     * Field names confirmed via round-trip test on Elementor 4.1.3:
+     *   Widgets: _position = 'absolute'
+     *   Containers: position = 'absolute' (no underscore)
+     *   Common: _offset_orientation_h (start/end), _offset_x, _offset_x_end,
+     *           _offset_orientation_v (start/end), _offset_y, _offset_y_end
+     *
+     * Also sets explicit width/height from the child's bounding box so that
+     * the absolutely-positioned element maintains its Figma dimensions.
+     */
+    private function apply_absolute_positioning(array &$element, array $child, array $parent): void {
+        $rel = $this->compute_relative_position($child, $parent);
+        if ($rel === null) {
             return;
         }
 
-        $rel_x = ($child_bbox['x'] ?? 0) - ($parent_bbox['x'] ?? 0);
-        $rel_y = ($child_bbox['y'] ?? 0) - ($parent_bbox['y'] ?? 0);
-        $child_w = (int) ($child_bbox['width'] ?? 0);
-        $child_h = (int) ($child_bbox['height'] ?? 0);
-
-        // Convert stdClass settings to array for modification, then back
+        $child_bbox = $child['absoluteBoundingBox'] ?? [];
         $settings = (array) $element['settings'];
         $el_type = $element['elType'] ?? '';
 
-        // Set position to absolute (different key for widgets vs containers)
+        // Position key differs: containers use "position", widgets use "_position"
         if ($el_type === 'container') {
             $settings['position'] = 'absolute';
         } else {
             $settings['_position'] = 'absolute';
         }
 
-        // Horizontal: positive x → offset from left, negative x → offset from right
-        if ($rel_x >= 0) {
+        // Horizontal offset + orientation
+        if ($rel['x'] >= 0) {
             $settings['_offset_orientation_h'] = 'start';
             $settings['_offset_x'] = (object) [
                 'unit' => 'px',
-                'size' => (int) round($rel_x),
+                'size' => (int) round($rel['x']),
             ];
         } else {
             $settings['_offset_orientation_h'] = 'end';
             $settings['_offset_x_end'] = (object) [
                 'unit' => 'px',
-                'size' => (int) round(abs($rel_x)),
+                'size' => (int) round(abs($rel['x'])),
             ];
         }
 
-        // Vertical: positive y → offset from top, negative y → offset from bottom
-        if ($rel_y >= 0) {
+        // Vertical offset + orientation
+        if ($rel['y'] >= 0) {
             $settings['_offset_orientation_v'] = 'start';
             $settings['_offset_y'] = (object) [
                 'unit' => 'px',
-                'size' => (int) round($rel_y),
+                'size' => (int) round($rel['y']),
             ];
         } else {
             $settings['_offset_orientation_v'] = 'end';
             $settings['_offset_y_end'] = (object) [
                 'unit' => 'px',
-                'size' => (int) round(abs($rel_y)),
+                'size' => (int) round(abs($rel['y'])),
             ];
+        }
+
+        // Set explicit width/height from bounding box
+        // Containers use width/min_height, widgets use _width/_height
+        $child_w = (int) ($child_bbox['width'] ?? 0);
+        $child_h = (int) ($child_bbox['height'] ?? 0);
+        if ($child_w > 0) {
+            if ($el_type === 'container') {
+                $settings['width'] = (object) ['unit' => 'px', 'size' => $child_w];
+            } else {
+                $settings['_width'] = (object) ['unit' => 'px', 'size' => $child_w];
+            }
+        }
+        if ($child_h > 0) {
+            if ($el_type === 'container') {
+                $settings['min_height'] = (object) ['unit' => 'px', 'size' => $child_h];
+            } else {
+                $settings['_height'] = (object) ['unit' => 'px', 'size' => $child_h];
+            }
         }
 
         $element['settings'] = (object) $settings;

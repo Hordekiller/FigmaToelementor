@@ -238,14 +238,17 @@ class Figma_API {
      * @return array|null Decoded response
      */
     private function request(string $endpoint): ?array {
+        $this->enforce_rate_limit();
+        return $this->do_request($endpoint, 3);
+    }
+
+    private function do_request(string $endpoint, int $retries_left): ?array {
         if (empty($this->token)) {
             Logger::log('WARNING', 'FigmaAPI', 'Request skipped — no token set', [
                 'endpoint' => $endpoint,
             ]);
             return null;
         }
-
-        $this->enforce_rate_limit();
 
         $url = self::API_BASE . ltrim($endpoint, '/');
         $redacted_url = str_replace($this->token, '[REDACTED]', $url);
@@ -286,15 +289,23 @@ class Figma_API {
         ]);
 
         if ($code === 429) {
-            $retry_after = (int) wp_remote_retrieve_header($response, 'Retry-After');
-            if ($retry_after > 0 && $retry_after <= 60) {
-                Logger::log('WARNING', 'FigmaAPI', 'Rate limited — retrying after delay', [
-                    'retry_after' => $retry_after,
+            if ($retries_left <= 1) {
+                Logger::log('ERROR', 'FigmaAPI', 'Rate limited — max retries exhausted', [
                     'endpoint' => $endpoint,
                 ]);
-                sleep($retry_after);
-                return $this->request($endpoint);
+                return null;
             }
+            $retry_after = (int) wp_remote_retrieve_header($response, 'Retry-After');
+            // Cap wait at 60s; default 5s if no Retry-After header
+            $delay = max(1, min(60, $retry_after > 0 ? $retry_after : 5));
+            Logger::log('WARNING', 'FigmaAPI', 'Rate limited — retrying', [
+                'retry_after' => $retry_after,
+                'delay' => $delay,
+                'retries_left' => $retries_left - 1,
+                'endpoint' => $endpoint,
+            ]);
+            sleep($delay);
+            return $this->do_request($endpoint, $retries_left - 1);
         }
 
         if ($code !== 200) {
