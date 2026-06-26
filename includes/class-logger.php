@@ -1,24 +1,29 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Logger {
+class Logger
+{
     private static ?string $run_id = null;
     private static ?string $log_dir = null;
 
-    public static function start_run(string $run_id): void {
+    public static function start_run(string $run_id): void
+    {
         self::$run_id = $run_id;
     }
 
-    public static function log(string $level, string $component, string $message, array $context = []): void {
+    /** @param array<string, mixed> $context */
+    public static function log(string $level, string $component, string $message, array $context = []): void
+    {
         try {
             if (self::$log_dir === null) {
-                $upload_dir = wp_upload_dir();
-                if (isset($upload_dir['basedir'])) {
-                    self::$log_dir = $upload_dir['basedir'] . '/hello-figma-logs';
+                $upload = wp_upload_dir();
+                if (!empty($upload['basedir'])) {
+                    self::$log_dir = $upload['basedir'] . '/hello-figma-logs';
                 } else {
                     return;
                 }
@@ -37,7 +42,7 @@ class Logger {
             $log_file = self::$log_dir . "/import-{$date}.log";
 
             $timestamp = current_time('Y-m-d H:i:s');
-            $run = self::$run_id !== null ? " [{$run_id}]" : '';
+            $run = self::$run_id !== null ? ' [' . self::$run_id . ']' : '';
             $ctx = !empty($context) ? ' | context=' . wp_json_encode($context) : '';
 
             $line = "[{$timestamp}]{$run} [{$level}] [{$component}] {$message}{$ctx}" . PHP_EOL;
@@ -48,7 +53,8 @@ class Logger {
         }
     }
 
-    public static function get_latest_log_contents(int $lines = 200): string {
+    public static function get_latest_log_contents(int $lines = 200): string
+    {
         try {
             $date = current_time('Y-m-d');
             $log_file = self::get_log_dir() . "/import-{$date}.log";
@@ -69,7 +75,8 @@ class Logger {
         }
     }
 
-    private static function get_log_dir(): string {
+    private static function get_log_dir(): string
+    {
         if (self::$log_dir === null) {
             $upload_dir = wp_upload_dir();
             self::$log_dir = $upload_dir['basedir'] . '/hello-figma-logs';

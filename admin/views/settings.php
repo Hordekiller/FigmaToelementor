@@ -15,9 +15,11 @@
                            name="figma_pat"
                            value=""
                            class="regular-text"
-                           placeholder="<?php echo (new \HelloFigma\Figma_API())->has_token() ? esc_attr__('(current token hidden — enter new value to replace)', 'hello-figma') : esc_attr__('figd_xxxxx...', 'hello-figma'); ?>"
+                            placeholder="<?php echo (new \HelloFigma\Figma_API())->has_token()
+                                ? esc_attr__('(current token hidden — enter new value to replace)', 'hello-figma')
+                                : esc_attr__('figd_xxxxx...', 'hello-figma'); ?>"
                            autocomplete="off">
-                    <?php if ((new \HelloFigma\Figma_API())->has_token()): ?>
+                    <?php if ((new \HelloFigma\Figma_API())->has_token()) : ?>
                         <p class="description">
                             <?php esc_html_e('A token is already configured. Leave blank to keep it.', 'hello-figma'); ?>
                         </p>
@@ -67,15 +69,15 @@
     <div class="hello-figma-card" style="margin: 20px 0; padding: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
         <h3><?php esc_html_e('Figma Connection Status', 'hello-figma'); ?></h3>
         <p>
-            <?php if (!$has_token): ?>
+            <?php if (!$has_token) : ?>
                 <span style="color: #d63638; font-weight: 600;"><?php esc_html_e('❌ No token configured', 'hello-figma'); ?></span>
-            <?php elseif ($token_valid): ?>
+            <?php elseif ($token_valid) : ?>
                 <span style="color: #00a32a; font-weight: 600;"><?php esc_html_e('✅ Connected', 'hello-figma'); ?></span>
-            <?php else: ?>
+            <?php else : ?>
                 <span style="color: #d63638; font-weight: 600;"><?php esc_html_e('❌ Invalid token', 'hello-figma'); ?></span>
             <?php endif; ?>
         </p>
-        <?php if ($expiry_info): ?>
+        <?php if ($expiry_info) : ?>
             <p style="color: #666;"><?php echo esc_html($expiry_info); ?></p>
         <?php endif; ?>
     </div>

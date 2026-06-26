@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Compatibility {
+class Compatibility
+{
     private const MIN_PHP_VERSION = '8.0.0';
     private const MIN_WP_VERSION = '6.6';
     private const MIN_ELEMENTOR_VERSION = '3.25.0';
@@ -13,9 +15,11 @@ class Compatibility {
         'elementor' => 'Elementor',
     ];
 
+    /** @var string[] */
     private array $errors = [];
 
-    public function check(): bool {
+    public function check(): bool
+    {
         $this->errors = [];
 
         $this->check_php_version();
@@ -31,14 +35,16 @@ class Compatibility {
         return true;
     }
 
-    public function check_or_die(): void {
+    public function check_or_die(): void
+    {
         if (!$this->check()) {
             $message = implode("\n", $this->errors);
             wp_die(esc_html($message));
         }
     }
 
-    private function check_php_version(): void {
+    private function check_php_version(): void
+    {
         if (version_compare(PHP_VERSION, self::MIN_PHP_VERSION, '<')) {
             $this->errors[] = sprintf(
                 /* translators: 1: Min PHP version, 2: Current PHP version */
@@ -49,7 +55,8 @@ class Compatibility {
         }
     }
 
-    private function check_wp_version(): void {
+    private function check_wp_version(): void
+    {
         global $wp_version;
         if (version_compare($wp_version, self::MIN_WP_VERSION, '<')) {
             $this->errors[] = sprintf(
@@ -61,7 +68,8 @@ class Compatibility {
         }
     }
 
-    private function check_elementor(): void {
+    private function check_elementor(): void
+    {
         if (!did_action('elementor/loaded')) {
             $this->errors[] = __('Hello Elementor Figma Sync requires Elementor to be installed and activated.', 'hello-figma');
             return;
@@ -77,7 +85,8 @@ class Compatibility {
         }
     }
 
-    private function check_dependencies(): void {
+    private function check_dependencies(): void
+    {
         foreach (self::REQUIRED_PLUGINS as $slug => $name) {
             if (!is_plugin_active("{$slug}/{$slug}.php")) {
                 $this->errors[] = sprintf(
@@ -89,21 +98,24 @@ class Compatibility {
         }
     }
 
-    public function render_notices(): void {
+    public function render_notices(): void
+    {
         if (empty($this->errors)) {
             return;
         }
         ?>
         <div class="notice notice-error is-dismissible">
             <p><strong><?php esc_html_e('Hello Elementor Figma Sync', 'hello-figma'); ?></strong></p>
-            <?php foreach ($this->errors as $error): ?>
+            <?php foreach ($this->errors as $error) : ?>
                 <p><?php echo esc_html($error); ?></p>
             <?php endforeach; ?>
         </div>
         <?php
     }
 
-    public function get_errors(): array {
+    /** @return string[] */
+    public function get_errors(): array
+    {
         return $this->errors;
     }
 }

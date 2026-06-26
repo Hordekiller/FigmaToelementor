@@ -1,33 +1,39 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Admin {
+class Admin
+{
     private Plugin $plugin;
     private string $menu_slug = 'hello-figma';
 
-    public function __construct(Plugin $plugin) {
+    public function __construct(Plugin $plugin)
+    {
         $this->plugin = $plugin;
     }
 
-    public function init(): void {
+    public function init(): void
+    {
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_init', [$this, 'handle_form_submissions']);
         add_action('admin_init', [$this, 'handle_style_sync_form']);
         add_action('admin_init', [$this, 'handle_ajax_actions']);
     }
 
-    public function handle_style_sync_form(): void {
+    public function handle_style_sync_form(): void
+    {
         if (!isset($_GET['page']) || $_GET['page'] !== 'hello-figma-style-sync') {
             return;
         }
         $this->plugin->get_style_sync()->handle_form_submission();
     }
 
-    public function register_admin_menu(): void {
+    public function register_admin_menu(): void
+    {
         add_menu_page(
             __('Hello Figma Sync', 'hello-figma'),
             __('Figma Sync', 'hello-figma'),
@@ -75,29 +81,35 @@ class Admin {
         );
     }
 
-    public function render_dashboard(): void {
+    public function render_dashboard(): void
+    {
         $has_token = $this->plugin->get_figma_api()->has_token();
         $stats = $this->plugin->get_template_manager()->get_statistics();
         include HELLO_FIGMA_PATH . 'admin/views/dashboard.php';
     }
 
-    public function render_templates(): void {
+    public function render_templates(): void
+    {
         $templates = $this->plugin->get_template_manager()->get_figma_templates();
         include HELLO_FIGMA_PATH . 'admin/views/templates.php';
     }
 
-    public function render_style_sync(): void {
+    public function render_style_sync(): void
+    {
         include HELLO_FIGMA_PATH . 'admin/views/style-sync.php';
     }
 
-    public function render_settings(): void {
+    public function render_settings(): void
+    {
         include HELLO_FIGMA_PATH . 'admin/views/settings.php';
     }
 
-    public function handle_form_submissions(): void {
+    public function handle_form_submissions(): void
+    {
         // Handle clear cache
         if (isset($_POST['hello_figma_clear_cache'])) {
-            if (!wp_verify_nonce($_POST['_figma_cache_nonce'] ?? '', 'hello_figma_clear_cache')) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce
+            if (!wp_verify_nonce(wp_unslash($_POST['_figma_cache_nonce'] ?? ''), 'hello_figma_clear_cache')) {
                 wp_die(__('Security check failed.', 'hello-figma'));
             }
 
@@ -115,16 +127,17 @@ class Admin {
             return;
         }
 
-        if (!wp_verify_nonce($_POST['_hello_figma_nonce'] ?? '', 'hello_figma_settings')) {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce
+        if (!wp_verify_nonce(wp_unslash($_POST['_hello_figma_nonce'] ?? ''), 'hello_figma_settings')) {
             wp_die(__('Security check failed.', 'hello-figma'));
         }
 
-        $pat = sanitize_text_field($_POST['figma_pat'] ?? '');
+        $pat = sanitize_text_field(wp_unslash($_POST['figma_pat'] ?? ''));
         if (!empty($pat) && $pat !== '********') {
             $this->plugin->get_figma_api()->set_token($pat);
         }
 
-        $file_key = $this->parse_file_key(sanitize_text_field($_POST['figma_file_key'] ?? ''));
+        $file_key = $this->parse_file_key(sanitize_text_field(wp_unslash($_POST['figma_file_key'] ?? '')));
         if (!empty($file_key)) {
             update_option('hello_figma_file_key', $file_key);
         }
@@ -143,7 +156,8 @@ class Admin {
         });
     }
 
-    public function handle_ajax_actions(): void {
+    public function handle_ajax_actions(): void
+    {
         add_action('wp_ajax_hello_figma_convert', [$this, 'ajax_convert']);
         add_action('wp_ajax_hello_figma_delete_template', [$this, 'ajax_delete_template']);
         add_action('wp_ajax_hello_figma_export_template', [$this, 'ajax_export_template']);
@@ -155,7 +169,8 @@ class Admin {
         add_action('wp_ajax_hello_figma_import_progress', [$this, 'ajax_import_progress']);
     }
 
-    public function ajax_convert(): void {
+    public function ajax_convert(): void
+    {
         $this->verify_ajax();
 
         $run_id = uniqid('figma_import_');
@@ -163,25 +178,27 @@ class Admin {
 
         Logger::log('INFO', 'Admin', 'Import started', [
             'file_key' => $this->get_file_key_from_post('file_key'),
-            'node_id' => sanitize_text_field($_POST['node_id'] ?? ''),
-            'title' => sanitize_text_field($_POST['title'] ?? ''),
-            'format' => sanitize_text_field($_POST['format'] ?? 'post'),
+            'node_id' => sanitize_text_field(wp_unslash($_POST['node_id'] ?? '')),
+            'title' => sanitize_text_field(wp_unslash($_POST['title'] ?? '')),
+            'format' => sanitize_text_field(wp_unslash($_POST['format'] ?? 'post')),
         ]);
 
         $file_key = $this->get_file_key_from_post('file_key');
-        $node_id = sanitize_text_field($_POST['node_id'] ?? '');
-        $title = sanitize_text_field($_POST['title'] ?? __('Figma Import', 'hello-figma'));
-        $format = sanitize_text_field($_POST['format'] ?? 'post');
-        $file_name = sanitize_text_field($_POST['file_name'] ?? '');
+        $node_id = sanitize_text_field(wp_unslash($_POST['node_id'] ?? ''));
+        $title = sanitize_text_field(wp_unslash($_POST['title'] ?? __('Figma Import', 'hello-figma')));
+        $format = sanitize_text_field(wp_unslash($_POST['format'] ?? 'post'));
+        $file_name = sanitize_text_field(wp_unslash($_POST['file_name'] ?? ''));
 
         $overrides = [];
-        if (!empty($_POST['overrides'])) {
-            $decoded = json_decode(wp_unslash($_POST['overrides']), true);
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string, decoded below
+        $overrides_raw = wp_unslash($_POST['overrides'] ?? '');
+        if ('' !== $overrides_raw) {
+            $decoded = json_decode($overrides_raw, true);
             if (is_array($decoded)) {
                 $overrides = $decoded;
             } else {
                 Logger::log('WARNING', 'Admin', 'Invalid overrides JSON', [
-                    'raw' => $_POST['overrides'],
+                    'raw' => $overrides_raw,
                 ]);
             }
         }
@@ -246,10 +263,11 @@ class Admin {
         ]);
     }
 
-    public function ajax_import_progress(): void {
+    public function ajax_import_progress(): void
+    {
         $this->verify_ajax_readonly();
 
-        $run_id = sanitize_text_field($_POST['run_id'] ?? '');
+        $run_id = sanitize_text_field(wp_unslash($_POST['run_id'] ?? ''));
         if (empty($run_id)) {
             wp_send_json_error(['message' => 'No run ID provided.']);
         }
@@ -262,7 +280,8 @@ class Admin {
         wp_send_json_success($progress);
     }
 
-    private function set_import_progress(string $run_id, string $stage, int $percentage, int $current = 0, int $total = 0): void {
+    private function set_import_progress(string $run_id, string $stage, int $percentage, int $current = 0, int $total = 0): void
+    {
         set_transient('hello_figma_import_progress_' . $run_id, [
             'stage' => $stage,
             'percentage' => $percentage,
@@ -271,11 +290,13 @@ class Admin {
         ], 5 * MINUTE_IN_SECONDS);
     }
 
-    private function clear_import_progress(string $run_id): void {
+    private function clear_import_progress(string $run_id): void
+    {
         delete_transient('hello_figma_import_progress_' . $run_id);
     }
 
-    private function count_image_placeholders(array $data): int {
+    private function count_image_placeholders(array $data): int
+    {
         $count = 0;
         array_walk_recursive($data, function ($value) use (&$count): void {
             if (is_string($value) && str_starts_with($value, 'figma-image://')) {
@@ -285,10 +306,12 @@ class Admin {
         return $count;
     }
 
-    public function ajax_delete_template(): void {
+    public function ajax_delete_template(): void
+    {
         $this->verify_ajax();
 
-        $post_id = (int) ($_POST['post_id'] ?? 0);
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- (int) cast sanitizes
+        $post_id = (int) (wp_unslash($_POST['post_id'] ?? 0));
         $result = $this->plugin->get_template_manager()->delete_template($post_id);
 
         if (!$result) {
@@ -298,10 +321,12 @@ class Admin {
         wp_send_json_success(['message' => __('Template deleted.', 'hello-figma')]);
     }
 
-    public function ajax_export_template(): void {
+    public function ajax_export_template(): void
+    {
         $this->verify_ajax();
 
-        $post_id = (int) ($_POST['post_id'] ?? 0);
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- (int) cast sanitizes
+        $post_id = (int) (wp_unslash($_POST['post_id'] ?? 0));
         $export = $this->plugin->get_template_manager()->export_template($post_id);
 
         if ($export === null) {
@@ -311,11 +336,12 @@ class Admin {
         wp_send_json_success($export);
     }
 
-    public function ajax_fetch_preview(): void {
+    public function ajax_fetch_preview(): void
+    {
         $this->verify_ajax();
 
         $file_key = $this->get_file_key_from_post('file_key');
-        $node_id = sanitize_text_field($_POST['node_id'] ?? '');
+        $node_id = sanitize_text_field(wp_unslash($_POST['node_id'] ?? ''));
 
         if (empty($file_key)) {
             wp_send_json_error(['message' => __('File key is required.', 'hello-figma')]);
@@ -334,10 +360,11 @@ class Admin {
         wp_send_json_success(['images' => $images]);
     }
 
-    public function ajax_sync_styles(): void {
+    public function ajax_sync_styles(): void
+    {
         $this->verify_ajax();
 
-        $file_key = sanitize_text_field($_POST['file_key'] ?? '');
+        $file_key = sanitize_text_field(wp_unslash($_POST['file_key'] ?? ''));
         if (empty($file_key)) {
             $file_key = get_option('hello_figma_file_key', '');
         }
@@ -346,7 +373,7 @@ class Admin {
             wp_send_json_error(['message' => __('No Figma file key configured.', 'hello-figma')]);
         }
 
-        $type = sanitize_text_field($_POST['type'] ?? 'all');
+        $type = sanitize_text_field(wp_unslash($_POST['type'] ?? 'all'));
         $colors = [];
         $typography = [];
 
@@ -361,14 +388,16 @@ class Admin {
             'colors' => $colors,
             'typography' => $typography,
             'message' => sprintf(
-                __('Synced %d colors and %d typography styles.', 'hello-figma'),
+                // translators: %1$d is the number of colors, %2$d is the number of typography styles.
+                __('Synced %1$d colors and %2$d typography styles.', 'hello-figma'),
                 count($colors),
                 count($typography)
             ),
         ]);
     }
 
-    public function ajax_fetch_structure(): void {
+    public function ajax_fetch_structure(): void
+    {
         $this->verify_ajax();
 
         $file_key = $this->get_file_key_from_post('file_key');
@@ -388,11 +417,13 @@ class Admin {
         wp_send_json_success($structure);
     }
 
-    public function ajax_fetch_frame_images(): void {
+    public function ajax_fetch_frame_images(): void
+    {
         $this->verify_ajax();
 
         $file_key = $this->get_file_key_from_post('file_key');
-        $node_ids_raw = $_POST['node_ids'] ?? '';
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via array_map below
+        $node_ids_raw = wp_unslash($_POST['node_ids'] ?? '');
 
         if (empty($file_key) || empty($node_ids_raw)) {
             wp_send_json_error(['message' => __('File key and node IDs are required.', 'hello-figma')]);
@@ -414,11 +445,12 @@ class Admin {
         wp_send_json_success(['images' => $images]);
     }
 
-    public function ajax_preview_sections(): void {
+    public function ajax_preview_sections(): void
+    {
         $this->verify_ajax();
 
         $file_key = $this->get_file_key_from_post('file_key');
-        $node_id = sanitize_text_field($_POST['node_id'] ?? '');
+        $node_id = sanitize_text_field(wp_unslash($_POST['node_id'] ?? ''));
 
         if (empty($file_key) || empty($node_id)) {
             wp_send_json_error(['message' => __('File key and node ID are required.', 'hello-figma')]);
@@ -433,8 +465,10 @@ class Admin {
         wp_send_json_success(['sections' => $sections]);
     }
 
-    private function verify_ajax(): void {
-        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'hello_figma_nonce')) {
+    private function verify_ajax(): void
+    {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce
+        if (!wp_verify_nonce(wp_unslash($_POST['nonce'] ?? ''), 'hello_figma_nonce')) {
             wp_send_json_error(['message' => __('Security check failed.', 'hello-figma')]);
         }
 
@@ -443,7 +477,8 @@ class Admin {
         }
     }
 
-    private function verify_ajax_readonly(): void {
+    private function verify_ajax_readonly(): void
+    {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma')]);
         }
@@ -457,7 +492,8 @@ class Admin {
      *   https://www.figma.com/design/abc123DEF/Name
      *   abc123DEF
      */
-    private function parse_file_key(string $input): string {
+    private function parse_file_key(string $input): string
+    {
         $input = trim($input);
         if ($input === '') {
             return '';
@@ -479,7 +515,8 @@ class Admin {
     /**
      * Use parse_file_key on a POST field.
      */
-    private function get_file_key_from_post(string $field): string {
-        return $this->parse_file_key(sanitize_text_field($_POST[$field] ?? ''));
+    private function get_file_key_from_post(string $field): string
+    {
+        return $this->parse_file_key(sanitize_text_field(wp_unslash($_POST[$field] ?? '')));
     }
 }

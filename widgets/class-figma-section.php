@@ -1,37 +1,45 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma\Widgets;
 
 defined('ABSPATH') || exit;
 
-class Figma_Section extends \Elementor\Widget_Base {
-
-    public function get_name(): string {
+class Figma_Section extends \Elementor\Widget_Base
+{
+    public function get_name(): string
+    {
         return 'figma_section';
     }
 
-    public function get_title(): string {
+    public function get_title(): string
+    {
         return esc_html__('Figma Section', 'hello-figma');
     }
 
-    public function get_icon(): string {
+    public function get_icon(): string
+    {
         return 'eicon-section';
     }
 
-    public function get_categories(): array {
+    public function get_categories(): array
+    {
         return ['figma-category'];
     }
 
-    public function get_keywords(): array {
+    public function get_keywords(): array
+    {
         return ['figma', 'section', 'row', 'wrapper'];
     }
 
-    public function has_widget_inner_wrapper(): bool {
+    public function has_widget_inner_wrapper(): bool
+    {
         return false;
     }
 
-    protected function register_controls(): void {
+    protected function register_controls(): void
+    {
         $this->start_controls_section(
             'section_layout',
             [
@@ -176,7 +184,8 @@ class Figma_Section extends \Elementor\Widget_Base {
         $this->end_controls_section();
     }
 
-    protected function render(): void {
+    protected function render(): void
+    {
         $settings = $this->get_settings_for_display();
         $this->add_render_attribute('section', 'class', 'figma-section');
 
@@ -197,7 +206,8 @@ class Figma_Section extends \Elementor\Widget_Base {
         <?php
     }
 
-    protected function content_template(): void {
+    protected function content_template(): void
+    {
         ?>
         <div class="figma-section figma-section-{{ settings.content_width }}">
             <div class="figma-section-inner">

@@ -1,33 +1,40 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma\Widgets;
 
 defined('ABSPATH') || exit;
 
-class Figma_Image extends \Elementor\Widget_Base {
-
-    public function get_name(): string {
+class Figma_Image extends \Elementor\Widget_Base
+{
+    public function get_name(): string
+    {
         return 'figma_image';
     }
 
-    public function get_title(): string {
+    public function get_title(): string
+    {
         return esc_html__('Figma Image', 'hello-figma');
     }
 
-    public function get_icon(): string {
+    public function get_icon(): string
+    {
         return 'eicon-image';
     }
 
-    public function get_categories(): array {
+    public function get_categories(): array
+    {
         return ['figma-category'];
     }
 
-    public function get_keywords(): array {
+    public function get_keywords(): array
+    {
         return ['figma', 'image', 'photo'];
     }
 
-    protected function register_controls(): void {
+    protected function register_controls(): void
+    {
         $this->start_controls_section(
             'section_image',
             [
@@ -163,7 +170,8 @@ class Figma_Image extends \Elementor\Widget_Base {
         $this->end_controls_section();
     }
 
-    protected function render(): void {
+    protected function render(): void
+    {
         $settings = $this->get_settings_for_display();
 
         if (empty($settings['image']['url'])) {
@@ -201,7 +209,8 @@ class Figma_Image extends \Elementor\Widget_Base {
         <?php
     }
 
-    protected function content_template(): void {
+    protected function content_template(): void
+    {
         ?>
         <div class="figma-image">
             <# if ( settings.image.url ) { #>

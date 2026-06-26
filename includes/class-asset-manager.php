@@ -1,19 +1,23 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Asset_Manager {
+class Asset_Manager
+{
     private const STYLE_HANDLE = 'hello-figma-admin';
     private const SCRIPT_HANDLE = 'hello-figma-admin';
 
-    public function init(): void {
+    public function init(): void
+    {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
     }
 
-    public function enqueue_admin_assets(string $hook): void {
+    public function enqueue_admin_assets(string $hook): void
+    {
         if (!str_contains($hook, 'hello-figma')) {
             return;
         }
@@ -44,7 +48,8 @@ class Asset_Manager {
         ]);
     }
 
-    public function enqueue_elementor_editor_assets(): void {
+    public function enqueue_elementor_editor_assets(): void
+    {
         wp_enqueue_script(
             'hello-figma-editor',
             HELLO_FIGMA_URL . 'admin/js/editor.js',

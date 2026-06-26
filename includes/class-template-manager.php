@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Template_Manager {
+class Template_Manager
+{
     private const POST_TYPE = 'elementor_library';
     private const TAXONOMY = 'elementor_library_type';
     private const SOURCE_META = '_hello_figma_source';
@@ -21,7 +23,8 @@ class Template_Manager {
      * @param string $type Template type (page, section, etc.)
      * @return int|\WP_Error Post ID
      */
-    public function save_template(array $elementor_data, string $title, string $file_key, string $type = 'page', string $node_name = '', string $file_name = '') {
+    public function save_template(array $elementor_data, string $title, string $file_key, string $type = 'page', string $node_name = '', string $file_name = '')
+    {
         // Extract just the content array for _elementor_data (Elementor stores elements directly)
         $content = $elementor_data['content'] ?? [$elementor_data];
 
@@ -62,7 +65,7 @@ class Template_Manager {
         // Store the full template wrapper separately for export
         $post_data['meta_input']['_hello_figma_template_wrapper'] = wp_slash(wp_json_encode($elementor_data));
 
-        $post_id = wp_insert_post($post_data);
+        $post_id = wp_insert_post($post_data, true);
 
         if (!is_wp_error($post_id)) {
             Logger::log('INFO', 'TemplateManager', 'Template post created', [
@@ -125,7 +128,8 @@ class Template_Manager {
      * @param string $type Optional template type filter
      * @return array Array of WP_Post objects
      */
-    public function get_figma_templates(string $type = ''): array {
+    public function get_figma_templates(string $type = ''): array
+    {
         $args = [
             'post_type' => self::POST_TYPE,
             'posts_per_page' => -1,
@@ -154,7 +158,8 @@ class Template_Manager {
      * @param int $post_id
      * @return bool
      */
-    public function delete_template(int $post_id): bool {
+    public function delete_template(int $post_id): bool
+    {
         $source = get_post_meta($post_id, self::SOURCE_META, true);
         if ($source !== 'figma') {
             return false;
@@ -169,7 +174,8 @@ class Template_Manager {
      * @param int $post_id
      * @return array|null Array with 'json' and 'filename' keys
      */
-    public function export_template(int $post_id): ?array {
+    public function export_template(int $post_id): ?array
+    {
         // Prefer the full wrapper we saved, otherwise reconstruct
         $wrapper = get_post_meta($post_id, '_hello_figma_template_wrapper', true);
 
@@ -203,7 +209,8 @@ class Template_Manager {
      * @param int $post_id
      * @return array|null
      */
-    public function get_figma_data(int $post_id): ?array {
+    public function get_figma_data(int $post_id): ?array
+    {
         $data = get_post_meta($post_id, self::FIGMA_DATA_META, true);
         if (empty($data)) {
             return null;
@@ -216,7 +223,8 @@ class Template_Manager {
     /**
      * Get statistics about Figma imports.
      */
-    public function get_statistics(): array {
+    public function get_statistics(): array
+    {
         $templates = $this->get_figma_templates();
 
         $stats = [
@@ -251,7 +259,8 @@ class Template_Manager {
     /**
      * Create necessary database structures on activation.
      */
-    public function create_tables(): void {
+    public function create_tables(): void
+    {
         // Elementor handles its own post type registration.
         // We just ensure our meta keys are recognized.
     }

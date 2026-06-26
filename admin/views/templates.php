@@ -1,11 +1,11 @@
 <div class="wrap hello-figma-templates">
     <h1><?php esc_html_e('Figma Templates', 'hello-figma'); ?></h1>
 
-    <?php if (empty($templates)): ?>
+    <?php if (empty($templates)) : ?>
         <div class="notice notice-info">
             <p><?php esc_html_e('No Figma templates imported yet. Go to Dashboard to convert your first design.', 'hello-figma'); ?></p>
         </div>
-    <?php else: ?>
+    <?php else : ?>
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
@@ -17,9 +17,9 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($templates as $template):
+                <?php foreach ($templates as $template) :
                     $figma_data = (new \HelloFigma\Template_Manager())->get_figma_data($template->ID);
-                ?>
+                    ?>
                     <tr>
                         <td>
                             <strong><?php echo esc_html(get_the_title($template)); ?></strong>

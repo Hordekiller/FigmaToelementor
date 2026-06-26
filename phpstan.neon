@@ -1,3 +1,6 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
     level: 6
     paths:
@@ -8,12 +11,11 @@ parameters:
         - hello-elementor-figma-sync.php
     excludePaths:
         - languages/
+        - stubs/
     bootstrapFiles:
-        - %rootDir%/../../phpstan/wordpress/bootstrap.php
-    checkMissingIterableValueType: false
+        - stubs/wordpress.php
+        - stubs/elementor.php
     reportUnmatchedIgnoredErrors: true
     ignoreErrors:
         - '#Call to an undefined method .+::#'
         - '#Constant .+ not found.#'
-    scanFiles:
-        - %rootDir%/../../phpstan/wordpress/constants.php

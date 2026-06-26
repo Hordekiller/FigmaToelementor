@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Figma_API {
+class Figma_API
+{
     private const API_BASE = 'https://api.figma.com/v1/';
     private const CACHE_TTL = HOUR_IN_SECONDS;
     private const RATE_LIMIT_KEY = 'hello_figma_rate_limit';
@@ -13,12 +15,14 @@ class Figma_API {
 
     private ?string $token = null;
 
-    public function __construct() {
+    public function __construct()
+    {
         $stored = get_option(self::TOKEN_OPTION, '');
         $this->token = $this->decrypt_token($stored);
     }
 
-    public function set_token(string $token): void {
+    public function set_token(string $token): void
+    {
         $this->token = $token;
         update_option(self::TOKEN_OPTION, $this->encrypt_token($token));
 
@@ -27,15 +31,18 @@ class Figma_API {
         }
     }
 
-    public function get_token(): string {
+    public function get_token(): string
+    {
         return $this->token ?? '';
     }
 
-    public function has_token(): bool {
+    public function has_token(): bool
+    {
         return !empty($this->token);
     }
 
-    private function encrypt_token(string $plaintext): string {
+    private function encrypt_token(string $plaintext): string
+    {
         if ($plaintext === '') {
             return '';
         }
@@ -45,7 +52,8 @@ class Figma_API {
         return base64_encode($iv . $ciphertext);
     }
 
-    private function decrypt_token(string $ciphertext_b64): string {
+    private function decrypt_token(string $ciphertext_b64): string
+    {
         if ($ciphertext_b64 === '') {
             return '';
         }
@@ -75,7 +83,8 @@ class Figma_API {
      * @param int|null $depth Response depth (1=canvases, 2=frames, null=full)
      * @return array|null
      */
-    public function get_file(string $file_key, ?string $node_id = null, ?int $depth = null): ?array {
+    public function get_file(string $file_key, ?string $node_id = null, ?int $depth = null): ?array
+    {
         $cache_key = 'hello_figma_file_' . $file_key . ($node_id ? "_$node_id" : '') . ($depth ? "_d{$depth}" : '');
         $cached = get_transient($cache_key);
         if ($cached !== false) {
@@ -110,7 +119,8 @@ class Figma_API {
      * @param array $node_ids Array of node IDs
      * @return array|null
      */
-    public function get_file_nodes(string $file_key, array $node_ids): ?array {
+    public function get_file_nodes(string $file_key, array $node_ids): ?array
+    {
         if (empty($node_ids)) {
             return null;
         }
@@ -137,7 +147,8 @@ class Figma_API {
      * @param string $file_key Figma file key
      * @return array|null
      */
-    public function get_styles(string $file_key): ?array {
+    public function get_styles(string $file_key): ?array
+    {
         $cache_key = 'hello_figma_styles_' . $file_key;
         $cached = get_transient($cache_key);
         if ($cached !== false) {
@@ -161,7 +172,8 @@ class Figma_API {
      * @param string $format Image format (png, jpg, svg, pdf)
      * @return array|null Map of node_id => image_url
      */
-    public function get_images(string $file_key, array $node_ids, string $format = 'png'): ?array {
+    public function get_images(string $file_key, array $node_ids, string $format = 'png'): ?array
+    {
         if (empty($node_ids)) {
             return null;
         }
@@ -193,7 +205,8 @@ class Figma_API {
      * @param string $file_key Figma file key
      * @return array|null
      */
-    public function get_variables(string $file_key): ?array {
+    public function get_variables(string $file_key): ?array
+    {
         $cache_key = 'hello_figma_variables_' . $file_key;
         $cached = get_transient($cache_key);
         if ($cached !== false) {
@@ -215,7 +228,8 @@ class Figma_API {
      * @param string $team_id Team ID
      * @return array|null
      */
-    public function get_team_styles(string $team_id): ?array {
+    public function get_team_styles(string $team_id): ?array
+    {
         $cache_key = 'hello_figma_team_styles_' . $team_id;
         $cached = get_transient($cache_key);
         if ($cached !== false) {
@@ -237,12 +251,14 @@ class Figma_API {
      * @param string $endpoint API endpoint
      * @return array|null Decoded response
      */
-    private function request(string $endpoint): ?array {
+    private function request(string $endpoint): ?array
+    {
         $this->enforce_rate_limit();
         return $this->do_request($endpoint, 3);
     }
 
-    private function do_request(string $endpoint, int $retries_left): ?array {
+    private function do_request(string $endpoint, int $retries_left): ?array
+    {
         if (empty($this->token)) {
             Logger::log('WARNING', 'FigmaAPI', 'Request skipped — no token set', [
                 'endpoint' => $endpoint,
@@ -342,7 +358,8 @@ class Figma_API {
     /**
      * Ensure we don't exceed Figma's rate limit (2 requests/second).
      */
-    private function enforce_rate_limit(): void {
+    private function enforce_rate_limit(): void
+    {
         $last_request = get_transient(self::RATE_LIMIT_KEY);
         if ($last_request !== false) {
             $elapsed = microtime(true) - (float) $last_request;
@@ -362,7 +379,8 @@ class Figma_API {
     /**
      * Update rate limit budget based on response headers.
      */
-    private function update_rate_budget(array $response, string $endpoint): void {
+    private function update_rate_budget(array $response, string $endpoint): void
+    {
         $remaining = wp_remote_retrieve_header($response, 'X-RateLimit-Remaining');
         if ($remaining !== '') {
             set_transient('hello_figma_rate_remaining', (int) $remaining, 60);
@@ -378,7 +396,8 @@ class Figma_API {
      *
      * @return bool True if token is valid
      */
-    public function test_token(): bool {
+    public function test_token(): bool
+    {
         if (empty($this->token)) {
             return false;
         }
@@ -407,7 +426,8 @@ class Figma_API {
      * @param array  $node_ids Array of node IDs to export
      * @return array Map of node_id => thumbnail_url (empty array on failure)
      */
-    public function get_thumbnail_urls(string $file_key, array $node_ids): array {
+    public function get_thumbnail_urls(string $file_key, array $node_ids): array
+    {
         if (empty($node_ids)) {
             return [];
         }
@@ -449,7 +469,8 @@ class Figma_API {
      *
      * @return string|null Human-readable expiry info or null if unknown
      */
-    public function get_token_expiry_info(): ?string {
+    public function get_token_expiry_info(): ?string
+    {
         if (empty($this->token)) {
             return null;
         }
@@ -478,7 +499,8 @@ class Figma_API {
     /**
      * Clear all cached Figma data.
      */
-    public function clear_cache(): void {
+    public function clear_cache(): void
+    {
         global $wpdb;
         $wpdb->query(
             $wpdb->prepare(

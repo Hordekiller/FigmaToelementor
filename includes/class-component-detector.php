@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Component_Detector {
+class Component_Detector
+{
     private const PATTERNS = [
         'slider'      => ['slider', 'اسلایدر'],
         'carousel'    => ['carousel', 'کاروسل'],
@@ -31,7 +33,8 @@ class Component_Detector {
      * @return string|null Canonical component_type key, or null if no pattern matched.
      * If multiple patterns match, return the FIRST match in PATTERNS array order.
      */
-    public static function detect(string $layer_name): ?string {
+    public static function detect(string $layer_name): ?string
+    {
         $haystack = mb_strtolower(trim($layer_name));
         if ($haystack === '') {
             return null;

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
@@ -19,7 +20,8 @@ defined('ABSPATH') || exit;
  *
  * @see https://developers.elementor.com/docs/data-structure/
  */
-class Elementor_Renderer {
+class Elementor_Renderer
+{
     private Figma_API $figma_api;
 
     // Mapping: Figma node type → [elType, widgetType?]
@@ -38,7 +40,8 @@ class Elementor_Renderer {
         'POLYGON'           => ['widget', 'icon'],
     ];
 
-    public function __construct(Figma_API $figma_api) {
+    public function __construct(Figma_API $figma_api)
+    {
         $this->figma_api = $figma_api;
     }
 
@@ -50,7 +53,8 @@ class Elementor_Renderer {
      * Shows any node that has an absoluteBoundingBox (i.e. a defined position
      * on the canvas), excluding only CANVAS and DOCUMENT themselves.
      */
-    public function get_file_structure(string $file_key): ?array {
+    public function get_file_structure(string $file_key): ?array
+    {
         // depth=2 is sufficient: document → canvases → frames (no nested children)
         $data = $this->figma_api->get_file($file_key, null, 2);
         if ($data === null || !isset($data['document'])) {
@@ -109,7 +113,8 @@ class Elementor_Renderer {
      *
      * @return array|null Template structure matching Elementor's JSON spec
      */
-    public function convert_node_to_template(string $file_key, string $node_id, array $overrides = []): ?array {
+    public function convert_node_to_template(string $file_key, string $node_id, array $overrides = []): ?array
+    {
         $data = $this->figma_api->get_file_nodes($file_key, [$node_id]);
         if ($data === null || !isset($data['nodes'][$node_id])) {
             return null;
@@ -167,7 +172,8 @@ class Elementor_Renderer {
      * @param string $node_id  Frame node ID
      * @return array|null Array of section arrays, or null if the frame is not found.
      */
-    public function get_sections_preview(string $file_key, string $node_id): ?array {
+    public function get_sections_preview(string $file_key, string $node_id): ?array
+    {
         $data = $this->figma_api->get_file_nodes($file_key, [$node_id]);
         if ($data === null || !isset($data['nodes'][$node_id])) {
             return null;
@@ -209,7 +215,8 @@ class Elementor_Renderer {
     /**
      * Legacy BC: if node_id given, convert that; otherwise pick first frame.
      */
-    public function convert_file(string $file_key, ?string $node_id = null, array $overrides = []): ?array {
+    public function convert_file(string $file_key, ?string $node_id = null, array $overrides = []): ?array
+    {
         if ($node_id) {
             return $this->convert_node_to_template($file_key, $node_id, $overrides);
         }
@@ -231,7 +238,8 @@ class Elementor_Renderer {
      *
      * @return array|null { id, elType, widgetType?, isInner, settings, elements }
      */
-    private function convert_node(array $node, ?string $parent_layout_mode = null, ?string $component_override = null): ?array {
+    private function convert_node(array $node, ?string $parent_layout_mode = null, ?string $component_override = null): ?array
+    {
         if (!$this->should_render($node)) {
             Logger::log('INFO', 'ElementorRenderer', 'Skipping non-visible node', [
                 'figma_type' => $node['type'] ?? null,
@@ -343,7 +351,8 @@ class Elementor_Renderer {
      * Rotated nodes (abs(rotation) > 0.01) are excluded — computing position for
      * rotated absolute nodes requires the full relativeTransform matrix (deferred).
      */
-    private function node_needs_absolute_positioning(array $child, ?string $parent_layout_mode): bool {
+    private function node_needs_absolute_positioning(array $child, ?string $parent_layout_mode): bool
+    {
         // Skip rotated nodes — their position requires the full relativeTransform
         // matrix calculation, not just x/y (deferred to a future task).
         if (isset($child['rotation']) && abs((float) $child['rotation']) > 0.01) {
@@ -365,7 +374,8 @@ class Elementor_Renderer {
      *
      * @return array{ x: float, y: float }|null
      */
-    private function compute_relative_position(array $child_node, array $parent_node): ?array {
+    private function compute_relative_position(array $child_node, array $parent_node): ?array
+    {
         $child_bbox = $child_node['absoluteBoundingBox'] ?? null;
         $parent_bbox = $parent_node['absoluteBoundingBox'] ?? null;
         if ($child_bbox === null || $parent_bbox === null) {
@@ -390,7 +400,8 @@ class Elementor_Renderer {
      * Also sets explicit width/height from the child's bounding box so that
      * the absolutely-positioned element maintains its Figma dimensions.
      */
-    private function apply_absolute_positioning(array &$element, array $child, array $parent): void {
+    private function apply_absolute_positioning(array &$element, array $child, array $parent): void
+    {
         $rel = $this->compute_relative_position($child, $parent);
         if ($rel === null) {
             return;
@@ -462,7 +473,8 @@ class Elementor_Renderer {
     /**
      * Resolve Figma type → Elementor elType/widgetType.
      */
-    private function resolve_type(array $node): array {
+    private function resolve_type(array $node): array
+    {
         $figma_type = $node['type'] ?? '';
 
         if (in_array($figma_type, ['RECTANGLE', 'ELLIPSE', 'BOOLEAN_OPERATION', 'STAR', 'POLYGON'], true)) {
@@ -482,7 +494,8 @@ class Elementor_Renderer {
 
     // ── Settings Extraction ──
 
-    private function extract_settings(array $node, string $elType, ?string $widgetType): \stdClass {
+    private function extract_settings(array $node, string $elType, ?string $widgetType): \stdClass
+    {
         $settings = new \stdClass();
 
         // CSS ID from layer name
@@ -519,7 +532,8 @@ class Elementor_Renderer {
     /**
      * Get the first visible paint (fill) from a node.
      */
-    private function get_visible_fill(array $node): ?array {
+    private function get_visible_fill(array $node): ?array
+    {
         foreach ($node['fills'] ?? [] as $fill) {
             if (($fill['visible'] ?? true) !== false && ($fill['opacity'] ?? 1) > 0) {
                 return $fill;
@@ -530,7 +544,8 @@ class Elementor_Renderer {
 
     // ── Visual Property Extractors ──
 
-    private function extract_background(array $node, \stdClass $settings): void {
+    private function extract_background(array $node, \stdClass $settings): void
+    {
         $fill = $this->get_visible_fill($node);
         if ($fill === null) {
             return;
@@ -602,7 +617,8 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_border(array $node, \stdClass $settings): void {
+    private function extract_border(array $node, \stdClass $settings): void
+    {
         // Find first visible stroke
         $stroke = null;
         foreach ($node['strokes'] ?? [] as $s) {
@@ -627,7 +643,10 @@ class Elementor_Renderer {
         $stroke_weight = $node['strokeWeight'] ?? null;
         $w = 1;
         $is_linked = true;
-        $top = $w; $right = $w; $bottom = $w; $left = $w;
+        $top = $w;
+        $right = $w;
+        $bottom = $w;
+        $left = $w;
 
         if (is_numeric($stroke_weight)) {
             $w = max(1, (int) $stroke_weight);
@@ -650,7 +669,8 @@ class Elementor_Renderer {
         // Elementor doesn't directly support this, but we can adjust positioning
     }
 
-    private function extract_border_radius(array $node, \stdClass $settings): void {
+    private function extract_border_radius(array $node, \stdClass $settings): void
+    {
         $r = $node['cornerRadius'] ?? $node['rectangleCornerRadii'] ?? null;
         if ($r === null) {
             return;
@@ -671,14 +691,16 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_opacity(array $node, \stdClass $settings): void {
+    private function extract_opacity(array $node, \stdClass $settings): void
+    {
         $o = $node['opacity'] ?? null;
         if ($o !== null && $o < 1) {
             $settings->opacity = $o;
         }
     }
 
-    private function extract_shadow(array $node, \stdClass $settings): void {
+    private function extract_shadow(array $node, \stdClass $settings): void
+    {
         foreach ($node['effects'] ?? [] as $effect) {
             if (in_array($effect['type'] ?? '', ['DROP_SHADOW', 'INNER_SHADOW'], true)) {
                 $settings->box_shadow_box_shadow_type = 'yes';
@@ -693,7 +715,8 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_container_layout(array $node, \stdClass $settings): void {
+    private function extract_container_layout(array $node, \stdClass $settings): void
+    {
         $layout = $node['layoutMode'] ?? null;
         if ($layout) {
             $settings->flex_direction = $layout === 'HORIZONTAL' ? 'row' : 'column';
@@ -734,7 +757,8 @@ class Elementor_Renderer {
         // in extract_parent_sizing_mode() called from extract_settings().
     }
 
-    private function extract_container_dimensions(array $node, \stdClass $settings): void {
+    private function extract_container_dimensions(array $node, \stdClass $settings): void
+    {
         $bBox = $node['absoluteBoundingBox'] ?? null;
         if ($bBox === null) {
             return;
@@ -751,7 +775,8 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_heading_settings(array $node, \stdClass $settings): void {
+    private function extract_heading_settings(array $node, \stdClass $settings): void
+    {
         // Text content
         $characters = $node['characters'] ?? '';
         if (empty($characters)) {
@@ -847,7 +872,8 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_button_settings(array $node, \stdClass $settings): void {
+    private function extract_button_settings(array $node, \stdClass $settings): void
+    {
         // Try to find text from child TEXT nodes first
         $texts = $this->find_text_nodes_in_subtree($node, 1);
         if (!empty($texts)) {
@@ -878,7 +904,8 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_image_settings(array $node, \stdClass $settings): void {
+    private function extract_image_settings(array $node, \stdClass $settings): void
+    {
         $settings->image_size = 'full';
         $settings->align = 'center';
 
@@ -891,7 +918,8 @@ class Elementor_Renderer {
         }
     }
 
-    private function extract_icon_settings(array $node, \stdClass $settings): void {
+    private function extract_icon_settings(array $node, \stdClass $settings): void
+    {
         $settings->icon = 'fas fa-star';
         $fills = $node['fills'] ?? [];
         if (!empty($fills) && ($fills[0]['type'] ?? '') === 'SOLID') {
@@ -909,7 +937,8 @@ class Elementor_Renderer {
      * container should NOT have an explicit width (row) or height (column)
      * from absoluteBoundingBox — it should shrink-wrap its children instead.
      */
-    private function extract_parent_sizing_mode(array $node, \stdClass $settings): void {
+    private function extract_parent_sizing_mode(array $node, \stdClass $settings): void
+    {
         $layout_mode = $node['layoutMode'] ?? null;
         if ($layout_mode === null || $layout_mode === 'NONE') {
             return;
@@ -954,7 +983,8 @@ class Elementor_Renderer {
      * @param \stdClass $settings           Elementor settings (mutated in place)
      * @param string   $parent_layout_mode Parent's layoutMode ('HORIZONTAL' or 'VERTICAL')
      */
-    private function extract_flex_child_sizing(array $node, \stdClass $settings, string $parent_layout_mode): void {
+    private function extract_flex_child_sizing(array $node, \stdClass $settings, string $parent_layout_mode): void
+    {
         $is_row = ($parent_layout_mode === 'HORIZONTAL');
 
         // ── Read sizing per axis ──
@@ -1048,7 +1078,8 @@ class Elementor_Renderer {
      *
      * @return array|null A carousel widget element, or null.
      */
-    private function try_build_carousel(array $node, string $component_type): ?array {
+    private function try_build_carousel(array $node, string $component_type): ?array
+    {
         $children = $node['children'] ?? [];
         $total = count($children);
 
@@ -1116,7 +1147,8 @@ class Elementor_Renderer {
      *
      * @return array|null The raw Figma node array, or null if not found.
      */
-    private function find_image_in_subtree(array $node, int $max_depth = 1): ?array {
+    private function find_image_in_subtree(array $node, int $max_depth = 1): ?array
+    {
         $fill = $this->get_visible_fill($node);
         if ($fill !== null && ($fill['type'] ?? '') === 'IMAGE') {
             $figma_type = $node['type'] ?? '';
@@ -1152,7 +1184,8 @@ class Elementor_Renderer {
      *
      * @return array|null An accordion widget element, or null.
      */
-    private function try_build_accordion(array $node): ?array {
+    private function try_build_accordion(array $node): ?array
+    {
         $children = $node['children'] ?? [];
         $total = count($children);
 
@@ -1219,7 +1252,8 @@ class Elementor_Renderer {
      *
      * @return array|null A gallery widget element, or null.
      */
-    private function try_build_gallery(array $node): ?array {
+    private function try_build_gallery(array $node): ?array
+    {
         $children = $node['children'] ?? [];
         $total = count($children);
 
@@ -1283,7 +1317,8 @@ class Elementor_Renderer {
      *
      * @return array Array of raw Figma TEXT node arrays.
      */
-    private function find_text_nodes_in_subtree(array $node, int $max_depth = 2): array {
+    private function find_text_nodes_in_subtree(array $node, int $max_depth = 2): array
+    {
         if ($max_depth < 0) {
             return [];
         }
@@ -1314,7 +1349,8 @@ class Elementor_Renderer {
      *
      * @see https://developers.elementor.com/docs/data-structure/page-content/
      */
-    private function wrap_in_template(array $content_elements, string $title): array {
+    private function wrap_in_template(array $content_elements, string $title): array
+    {
         return [
             'title' => $title,
             'type' => 'page',
@@ -1326,11 +1362,13 @@ class Elementor_Renderer {
 
     // ── Helpers ──
 
-    private function should_render(array $node): bool {
+    private function should_render(array $node): bool
+    {
         return ($node['visible'] ?? true) !== false && ($node['opacity'] ?? 1) > 0;
     }
 
-    private function detect_heading_level(array $style): string {
+    private function detect_heading_level(array $style): string
+    {
         $size = $style['fontSize'] ?? 16;
         return match (true) {
             $size >= 48 => 'h1',
@@ -1342,7 +1380,8 @@ class Elementor_Renderer {
         };
     }
 
-    private function map_align(string $figma): string {
+    private function map_align(string $figma): string
+    {
         return match ($figma) {
             'MIN' => 'flex-start',
             'CENTER' => 'center',
@@ -1356,11 +1395,13 @@ class Elementor_Renderer {
     /**
      * Generate an 8-character hex ID (matching Elementor's format).
      */
-    private function generate_id(): string {
+    private function generate_id(): string
+    {
         return substr(bin2hex(random_bytes(4)), 0, 8);
     }
 
-    private function rgba_to_hex(array $rgba): string {
+    private function rgba_to_hex(array $rgba): string
+    {
         $r = isset($rgba['r']) ? (int) round($rgba['r'] * 255) : 0;
         $g = isset($rgba['g']) ? (int) round($rgba['g'] * 255) : 0;
         $b = isset($rgba['b']) ? (int) round($rgba['b'] * 255) : 0;

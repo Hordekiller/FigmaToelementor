@@ -1,3 +1,7 @@
+<?php
+$has_token = $has_token ?? false;
+$stats = $stats ?? ['total' => 0, 'recent' => []];
+?>
 <div class="wrap hello-figma-dashboard">
     <h1><?php esc_html_e('Hello Figma Sync', 'hello-figma'); ?></h1>
 
@@ -6,9 +10,9 @@
         <div class="hello-figma-card">
             <h3><?php esc_html_e('Figma Connection', 'hello-figma'); ?></h3>
             <div class="card-status">
-                <?php if ($has_token): ?>
+                <?php if ($has_token) : ?>
                     <span class="status-connected"><?php esc_html_e('✅ Connected', 'hello-figma'); ?></span>
-                <?php else: ?>
+                <?php else : ?>
                     <span class="status-disconnected"><?php esc_html_e('❌ Not Connected', 'hello-figma'); ?></span>
                     <p><a href="<?php echo esc_url(admin_url('admin.php?page=hello-figma-settings')); ?>">
                         <?php esc_html_e('Configure Token', 'hello-figma'); ?>
@@ -22,7 +26,7 @@
             <p class="card-stat"><?php echo esc_html($stats['total']); ?></p>
         </div>
 
-        <?php if (!empty(get_option('hello_figma_file_key', ''))): ?>
+        <?php if (!empty(get_option('hello_figma_file_key', ''))) : ?>
         <div class="hello-figma-card">
             <h3><?php esc_html_e('Default File', 'hello-figma'); ?></h3>
             <p><code><?php echo esc_html(get_option('hello_figma_file_key', '')); ?></code></p>
@@ -119,7 +123,8 @@
         <div class="hello-figma-card">
             <h3><?php esc_html_e('Importing...', 'hello-figma'); ?></h3>
             <div class="hello-figma-progress-track">
-                <div class="hello-figma-progress-bar" id="hello-figma-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="hello-figma-progress-bar" id="hello-figma-progress-bar"
+                    role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             <p id="hello-figma-progress-label" class="hello-figma-progress-label"><?php esc_html_e('Starting...', 'hello-figma'); ?></p>
             <p id="hello-figma-progress-detail" class="hello-figma-progress-detail"></p>
@@ -127,7 +132,7 @@
     </div>
 
     <!-- Recent Imports -->
-    <?php if (!empty($stats['recent'])): ?>
+    <?php if (!empty($stats['recent'])) : ?>
         <div class="hello-figma-recent">
             <h2><?php esc_html_e('Recent Imports', 'hello-figma'); ?></h2>
             <table class="wp-list-table widefat fixed striped">
@@ -140,7 +145,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($stats['recent'] as $template): ?>
+                    <?php foreach ($stats['recent'] as $template) : ?>
                         <tr>
                             <td><?php echo esc_html(get_the_title($template)); ?></td>
                             <td><?php echo esc_html(implode(', ', wp_get_object_terms($template->ID, 'elementor_library_type', ['fields' => 'names']))); ?></td>

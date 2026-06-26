@@ -1,14 +1,17 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Image_Handler {
+class Image_Handler
+{
     private Figma_API $figma_api;
 
-    public function __construct(Figma_API $figma_api) {
+    public function __construct(Figma_API $figma_api)
+    {
         $this->figma_api = $figma_api;
     }
 
@@ -137,7 +140,8 @@ class Image_Handler {
     /**
      * @param callable|null $progress_callback Optional. Called with (int $current, int $total) per image.
      */
-    public function resolve_image_placeholders(string $file_key, array $data, ?callable $progress_callback = null): array {
+    public function resolve_image_placeholders(string $file_key, array $data, ?callable $progress_callback = null): array
+    {
         $node_ids = $this->collect_placeholder_ids($data);
         if (empty($node_ids)) {
             Logger::log('INFO', 'ImageHandler', 'No image placeholders found in converted data');
@@ -196,7 +200,8 @@ class Image_Handler {
     /**
      * Recursively collect unique node IDs found in figma-image:// placeholders.
      */
-    private function collect_placeholder_ids(array $data): array {
+    private function collect_placeholder_ids(array $data): array
+    {
         $ids = [];
         array_walk_recursive($data, function ($value) use (&$ids): void {
             if (is_string($value) && str_starts_with($value, 'figma-image://')) {
@@ -215,7 +220,8 @@ class Image_Handler {
      * When an array with a "url" key contains a figma-image:// placeholder,
      * both its "url" and "id" fields are replaced with the real attachment data.
      */
-    private function walk_and_replace(array $data, array $resolved): array {
+    private function walk_and_replace(array $data, array $resolved): array
+    {
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
                 if (isset($value['url']) && is_string($value['url']) && str_starts_with($value['url'], 'figma-image://')) {
@@ -241,7 +247,8 @@ class Image_Handler {
      * @param string $node_id Figma node ID (for meta)
      * @return int|\WP_Error
      */
-    private function sideload_image(string $url, string $name = '', string $node_id = '') {
+    private function sideload_image(string $url, string $name = '', string $node_id = '')
+    {
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';

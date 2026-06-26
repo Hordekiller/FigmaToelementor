@@ -4,6 +4,7 @@
 
     <file>.</file>
     <exclude-pattern>*/languages/*</exclude-pattern>
+    <exclude-pattern>*/stubs/*</exclude-pattern>
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
     <exclude-pattern>.git</exclude-pattern>
@@ -36,5 +37,20 @@
                 <element value="hello-figma"/>
             </property>
         </properties>
+    </rule>
+
+    <!--
+        Intentionally excluded rules — entire codebase uses snake_case
+        class/method names (WordPress convention), and the
+        defined('ABSPATH') || exit guard is standard WP plugin pattern.
+    -->
+    <rule ref="PSR1.Methods.CamelCapsMethodName">
+        <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+    </rule>
+    <rule ref="Squiz.Classes.ValidClassName">
+        <exclude name="Squiz.Classes.ValidClassName.NotCamelCaps"/>
+    </rule>
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
     </rule>
 </ruleset>

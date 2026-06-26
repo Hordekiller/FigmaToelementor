@@ -1,33 +1,41 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma;
 
 defined('ABSPATH') || exit;
 
-class Style_Sync {
+class Style_Sync
+{
     private Figma_API $figma_api;
 
     public const SYNCED_STYLES_OPTION = 'hello_figma_synced_styles';
-    private const KIT_META_KEY = 'hello_figma_figma_data';
 
-    public function __construct(Figma_API $figma_api) {
+    public function __construct(Figma_API $figma_api)
+    {
         $this->figma_api = $figma_api;
     }
 
-    public function init(): void {
+    public function init(): void
+    {
         add_action('elementor/kit/register_tabs', [$this, 'register_kit_tab'], 10, 1);
         add_filter('elementor/editor/localize_settings', [$this, 'add_editor_localizations']);
     }
 
-    public function register_kit_tab($kit): void {
+    /**
+     * @param \Elementor\Core\Kits\Documents\Kit $kit
+     */
+    public function register_kit_tab($kit): void
+    {
         $kit->register_tab('hello-figma-sync', [
             'label' => __('Figma Sync', 'hello-figma'),
             'callback' => [$this, 'render_kit_tab'],
         ]);
     }
 
-    public function render_kit_tab(): void {
+    public function render_kit_tab(): void
+    {
         $file_key = get_option('hello_figma_file_key', '');
         $synced = get_option(self::SYNCED_STYLES_OPTION, []);
         ?>
@@ -61,7 +69,7 @@ class Style_Sync {
                 </button>
             </form>
 
-            <?php if (!empty($synced)): ?>
+            <?php if (!empty($synced)) : ?>
                 <hr>
                 <h3><?php esc_html_e('Synced Styles', 'hello-figma'); ?></h3>
                 <p><?php echo esc_html(sprintf(
@@ -70,7 +78,7 @@ class Style_Sync {
                     count($synced)
                 )); ?></p>
                 <ul>
-                    <?php foreach ($synced as $style): ?>
+                    <?php foreach ($synced as $style) : ?>
                         <li>
                             <strong><?php echo esc_html($style['name']); ?></strong>
                             (<?php echo esc_html($style['type']); ?>)
@@ -82,7 +90,8 @@ class Style_Sync {
         <?php
     }
 
-    public function add_editor_localizations(array $config): array {
+    public function add_editor_localizations(array $config): array
+    {
         $synced = get_option(self::SYNCED_STYLES_OPTION, []);
 
         if (!empty($synced)) {
@@ -100,7 +109,8 @@ class Style_Sync {
     /**
      * Sync Figma colors to Elementor global colors.
      */
-    public function sync_colors(string $file_key): array {
+    public function sync_colors(string $file_key): array
+    {
         $styles = $this->figma_api->get_styles($file_key);
         if ($styles === null || !isset($styles['meta']['styles'])) {
             return [];
@@ -147,7 +157,8 @@ class Style_Sync {
     /**
      * Sync Figma typography to Elementor global typography.
      */
-    public function sync_typography(string $file_key): array {
+    public function sync_typography(string $file_key): array
+    {
         $styles = $this->figma_api->get_styles($file_key);
         if ($styles === null || !isset($styles['meta']['styles'])) {
             return [];
@@ -206,16 +217,18 @@ class Style_Sync {
     /**
      * Handle form submission for style sync.
      */
-    public function handle_form_submission(): void {
+    public function handle_form_submission(): void
+    {
         if (!isset($_POST['hello_figma_fetch_styles'])) {
             return;
         }
 
-        if (!wp_verify_nonce($_POST['_figma_sync_nonce'] ?? '', 'hello_figma_sync_styles')) {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce
+        if (!wp_verify_nonce(wp_unslash($_POST['_figma_sync_nonce'] ?? ''), 'hello_figma_sync_styles')) {
             wp_die(__('Security check failed.', 'hello-figma'));
         }
 
-        $file_key = sanitize_text_field($_POST['figma_file_key'] ?? '');
+        $file_key = sanitize_text_field(wp_unslash($_POST['figma_file_key'] ?? ''));
         if (empty($file_key)) {
             return;
         }
@@ -246,15 +259,18 @@ class Style_Sync {
         });
     }
 
-    private function get_synced_colors(array $synced): array {
+    private function get_synced_colors(array $synced): array
+    {
         return array_values(array_filter($synced, fn($s) => $s['type'] === 'color'));
     }
 
-    private function get_synced_typography(array $synced): array {
+    private function get_synced_typography(array $synced): array
+    {
         return array_values(array_filter($synced, fn($s) => $s['type'] === 'typography'));
     }
 
-    private function extract_color_from_style(array $style): ?string {
+    private function extract_color_from_style(array $style): ?string
+    {
         $paint = $style['paint'] ?? $style['fills'][0] ?? null;
         if ($paint === null || ($paint['type'] ?? '') !== 'SOLID') {
             return null;

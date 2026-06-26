@@ -1,33 +1,40 @@
 <?php
+
 declare(strict_types=1);
 
 namespace HelloFigma\Widgets;
 
 defined('ABSPATH') || exit;
 
-class Figma_Icon_Box extends \Elementor\Widget_Base {
-
-    public function get_name(): string {
+class Figma_Icon_Box extends \Elementor\Widget_Base
+{
+    public function get_name(): string
+    {
         return 'figma_icon_box';
     }
 
-    public function get_title(): string {
+    public function get_title(): string
+    {
         return esc_html__('Figma Icon Box', 'hello-figma');
     }
 
-    public function get_icon(): string {
+    public function get_icon(): string
+    {
         return 'eicon-icon-box';
     }
 
-    public function get_categories(): array {
+    public function get_categories(): array
+    {
         return ['figma-category'];
     }
 
-    public function get_keywords(): array {
+    public function get_keywords(): array
+    {
         return ['figma', 'icon', 'box', 'feature'];
     }
 
-    protected function register_controls(): void {
+    protected function register_controls(): void
+    {
         $this->start_controls_section(
             'section_content',
             [
@@ -183,7 +190,8 @@ class Figma_Icon_Box extends \Elementor\Widget_Base {
         $this->end_controls_section();
     }
 
-    protected function render(): void {
+    protected function render(): void
+    {
         $settings = $this->get_settings_for_display();
         ?>
         <div class="figma-icon-box-wrapper">
@@ -191,10 +199,10 @@ class Figma_Icon_Box extends \Elementor\Widget_Base {
                 <?php \Elementor\Icons_Manager::render_icon($settings['icon'], ['aria-hidden' => 'true']); ?>
             </div>
             <div class="figma-icon-box-content">
-                <?php if (!empty($settings['title'])): ?>
+                <?php if (!empty($settings['title'])) : ?>
                     <h3 class="figma-icon-box-title"><?php echo esc_html($settings['title']); ?></h3>
                 <?php endif; ?>
-                <?php if (!empty($settings['description'])): ?>
+                <?php if (!empty($settings['description'])) : ?>
                     <p class="figma-icon-box-description"><?php echo esc_html($settings['description']); ?></p>
                 <?php endif; ?>
             </div>
@@ -202,7 +210,8 @@ class Figma_Icon_Box extends \Elementor\Widget_Base {
         <?php
     }
 
-    protected function content_template(): void {
+    protected function content_template(): void
+    {
         ?>
         <#
         var iconHTML = elementor.helpers.renderIcon( view, settings.icon, {}, 'i' , 'object' );
