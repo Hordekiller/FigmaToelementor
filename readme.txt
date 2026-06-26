@@ -4,7 +4,7 @@ Tags: figma, elementor, hello-elementor, figma to elementor, template converter,
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 Copyright: 2026 Hordekiller
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -84,6 +84,15 @@ Yes. All imported templates are fully editable in Elementor — every widget, st
 Yes. Full RTL support with Persian translation included.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fix: PHPStan baseline regenerated (154→100 errors, all missingType.iterableValue)
+* Fix: Added proper WordPress/Elementor stubs for static analysis
+* Fix: Removed blanket PHPStan ignores — all root causes addressed
+* Fix: `wp_insert_post` now passes `$wp_error=true` for proper error handling
+* Fix: `$run_id` typo in Logger resolved
+* Fix: `should_position_absolute()` renamed to `node_needs_absolute_positioning()`
+* Docs: README.md and readme.txt accuracy pass (license table, features, known limitations)
 
 = 1.3.0 =
 * New: Absolute positioning — Figma absoluteBoundingBox converted to Elementor position:absolute

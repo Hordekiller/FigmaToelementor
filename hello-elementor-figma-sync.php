@@ -5,7 +5,7 @@
  * Plugin URI:      https://github.com/Hordekiller/FigmaToelementor
  * Description:     Convert Figma designs into Elementor templates with full style preservation.
  *                  Supports Flexbox Containers, typography, colors, gradients, and more.
- * Version:         1.3.0
+ * Version:         1.3.1
  * Author:          Hordekiller
  * Author URI:      https://github.com/Hordekiller
  * Text Domain:     hello-figma
@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-define('HELLO_FIGMA_VERSION', '1.3.0');
+define('HELLO_FIGMA_VERSION', '1.3.1');
 define('HELLO_FIGMA_FILE', __FILE__);
 define('HELLO_FIGMA_PATH', plugin_dir_path(__FILE__));
 define('HELLO_FIGMA_URL', plugin_dir_url(__FILE__));
