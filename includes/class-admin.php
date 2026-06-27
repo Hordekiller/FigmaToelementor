@@ -8,6 +8,26 @@ defined('ABSPATH') || exit;
 
 class Admin
 {
+    private const VALID_FORMATS = ['post', 'json'];
+    private const MAX_OVERRIDES_BYTES = 10240; // 10 KB limit for overrides JSON
+    private const ERROR_CODES = [
+        'INVALID_FORMAT' => 'invalid_format',
+        'OVERRIDES_TOO_LARGE' => 'overrides_too_large',
+        'OVERRIDES_INVALID_JSON' => 'overrides_invalid_json',
+        'OVERRIDES_TOO_DEEP' => 'overrides_too_deep',
+        'FILE_KEY_REQUIRED' => 'file_key_required',
+        'CONVERSION_FAILED' => 'conversion_failed',
+        'SAVE_FAILED' => 'save_failed',
+        'SECURITY_FAILED' => 'security_failed',
+        'PERMISSION_DENIED' => 'permission_denied',
+        'NOT_FOUND' => 'not_found',
+        'FETCH_FAILED' => 'fetch_failed',
+        'MISSING_PARAMS' => 'missing_params',
+        'DELETE_FAILED' => 'delete_failed',
+        'EXPORT_FAILED' => 'export_failed',
+        'SYNC_FAILED' => 'sync_failed',
+        'NO_PROGRESS' => 'no_progress',
+    ];
     private Plugin $plugin;
     private string $menu_slug = 'hello-figma';
 
@@ -189,29 +209,54 @@ class Admin
         $format = sanitize_text_field(wp_unslash($_POST['format'] ?? 'post'));
         $file_name = sanitize_text_field(wp_unslash($_POST['file_name'] ?? ''));
 
+        // ── Validate format enum ──
+        if (!in_array($format, self::VALID_FORMATS, true)) {
+            Logger::log('WARNING', 'Admin', 'Invalid format requested', ['format' => $format]);
+            wp_send_json_error(['message' => __('Invalid format. Allowed: post, json.', 'hello-figma'), 'code' => self::ERROR_CODES['INVALID_FORMAT']]);
+        }
+
+        // ── Parse and validate overrides ──
         $overrides = [];
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string, decoded below
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string, validated below
         $overrides_raw = wp_unslash($_POST['overrides'] ?? '');
         if ('' !== $overrides_raw) {
-            $decoded = json_decode($overrides_raw, true);
-            if (is_array($decoded)) {
-                $overrides = $decoded;
-            } else {
-                Logger::log('WARNING', 'Admin', 'Invalid overrides JSON', [
-                    'raw' => $overrides_raw,
+            // Size limit: prevent large payloads
+            if (strlen($overrides_raw) > self::MAX_OVERRIDES_BYTES) {
+                Logger::log('WARNING', 'Admin', 'Overrides payload too large', [
+                    'bytes' => strlen($overrides_raw),
+                    'max' => self::MAX_OVERRIDES_BYTES,
                 ]);
+                wp_send_json_error(['message' => __('Overrides payload too large.', 'hello-figma'), 'code' => self::ERROR_CODES['OVERRIDES_TOO_LARGE']]);
             }
+
+            $decoded = json_decode($overrides_raw, true);
+            if (!is_array($decoded) || json_last_error() !== JSON_ERROR_NONE) {
+                Logger::log('WARNING', 'Admin', 'Invalid overrides JSON', [
+                    'error' => json_last_error_msg(),
+                ]);
+                wp_send_json_error(['message' => __('Invalid overrides JSON.', 'hello-figma'), 'code' => self::ERROR_CODES['OVERRIDES_INVALID_JSON']]);
+            }
+
+            // Limit nested array depth to prevent stack issues
+            if (self::array_depth($decoded) > 5) {
+                Logger::log('WARNING', 'Admin', 'Overrides nesting too deep', [
+                    'depth' => self::array_depth($decoded),
+                ]);
+                wp_send_json_error(['message' => __('Overrides nesting too deep.', 'hello-figma'), 'code' => self::ERROR_CODES['OVERRIDES_TOO_DEEP']]);
+            }
+
+            $overrides = $decoded;
         }
 
         if (empty($file_key)) {
-            wp_send_json_error(['message' => __('File key is required.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('File key is required.', 'hello-figma'), 'code' => self::ERROR_CODES['FILE_KEY_REQUIRED']]);
         }
 
         $this->set_import_progress($run_id, __('Fetching design from Figma...', 'hello-figma'), 10);
 
         $elementor_data = $this->plugin->get_renderer()->convert_file($file_key, $node_id ?: null, $overrides);
         if ($elementor_data === null) {
-            wp_send_json_error(['message' => __('Failed to convert Figma file.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Failed to convert Figma file.', 'hello-figma'), 'code' => self::ERROR_CODES['CONVERSION_FAILED']]);
         }
 
         $this->set_import_progress($run_id, __('Converting sections...', 'hello-figma'), 30);
@@ -248,7 +293,7 @@ class Admin
 
         if (is_wp_error($post_id)) {
             $this->clear_import_progress($run_id);
-            wp_send_json_error(['message' => $post_id->get_error_message()]);
+            wp_send_json_error(['message' => $post_id->get_error_message(), 'code' => self::ERROR_CODES['SAVE_FAILED']]);
         }
 
         $this->set_import_progress($run_id, __('Import complete!', 'hello-figma'), 100);
@@ -269,12 +314,12 @@ class Admin
 
         $run_id = sanitize_text_field(wp_unslash($_POST['run_id'] ?? ''));
         if (empty($run_id)) {
-            wp_send_json_error(['message' => 'No run ID provided.']);
+            wp_send_json_error(['message' => 'No run ID provided.', 'code' => self::ERROR_CODES['MISSING_PARAMS']]);
         }
 
         $progress = get_transient('hello_figma_import_progress_' . $run_id);
         if ($progress === false) {
-            wp_send_json_error(['message' => 'No progress data.']);
+            wp_send_json_error(['message' => 'No progress data.', 'code' => self::ERROR_CODES['NO_PROGRESS']]);
         }
 
         wp_send_json_success($progress);
@@ -315,7 +360,7 @@ class Admin
         $result = $this->plugin->get_template_manager()->delete_template($post_id);
 
         if (!$result) {
-            wp_send_json_error(['message' => __('Failed to delete template.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Failed to delete template.', 'hello-figma'), 'code' => self::ERROR_CODES['DELETE_FAILED']]);
         }
 
         wp_send_json_success(['message' => __('Template deleted.', 'hello-figma')]);
@@ -330,7 +375,7 @@ class Admin
         $export = $this->plugin->get_template_manager()->export_template($post_id);
 
         if ($export === null) {
-            wp_send_json_error(['message' => __('Failed to export template.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Failed to export template.', 'hello-figma'), 'code' => self::ERROR_CODES['EXPORT_FAILED']]);
         }
 
         wp_send_json_success($export);
@@ -344,7 +389,7 @@ class Admin
         $node_id = sanitize_text_field(wp_unslash($_POST['node_id'] ?? ''));
 
         if (empty($file_key)) {
-            wp_send_json_error(['message' => __('File key is required.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('File key is required.', 'hello-figma'), 'code' => self::ERROR_CODES['FILE_KEY_REQUIRED']]);
         }
 
         $images = $this->plugin->get_figma_api()->get_images(
@@ -354,7 +399,7 @@ class Admin
         );
 
         if ($images === null) {
-            wp_send_json_error(['message' => __('Failed to fetch preview.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Failed to fetch preview.', 'hello-figma'), 'code' => self::ERROR_CODES['FETCH_FAILED']]);
         }
 
         wp_send_json_success(['images' => $images]);
@@ -370,7 +415,7 @@ class Admin
         }
 
         if (empty($file_key)) {
-            wp_send_json_error(['message' => __('No Figma file key configured.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('No Figma file key configured.', 'hello-figma'), 'code' => self::ERROR_CODES['FILE_KEY_REQUIRED']]);
         }
 
         $type = sanitize_text_field(wp_unslash($_POST['type'] ?? 'all'));
@@ -403,7 +448,7 @@ class Admin
         $file_key = $this->get_file_key_from_post('file_key');
 
         if (empty($file_key)) {
-            wp_send_json_error(['message' => __('File key is required.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('File key is required.', 'hello-figma'), 'code' => self::ERROR_CODES['FILE_KEY_REQUIRED']]);
         }
 
         $structure = $this->plugin->get_renderer()->get_file_structure($file_key);
@@ -426,7 +471,7 @@ class Admin
         $node_ids_raw = wp_unslash($_POST['node_ids'] ?? '');
 
         if (empty($file_key) || empty($node_ids_raw)) {
-            wp_send_json_error(['message' => __('File key and node IDs are required.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('File key and node IDs are required.', 'hello-figma'), 'code' => self::ERROR_CODES['MISSING_PARAMS']]);
         }
 
         // node_ids comes as comma-separated string
@@ -434,12 +479,12 @@ class Admin
         $node_ids = array_filter($node_ids);
 
         if (empty($node_ids)) {
-            wp_send_json_error(['message' => __('No valid node IDs provided.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('No valid node IDs provided.', 'hello-figma'), 'code' => self::ERROR_CODES['MISSING_PARAMS']]);
         }
 
         $images = $this->plugin->get_figma_api()->get_images($file_key, $node_ids, 'png');
         if ($images === null) {
-            wp_send_json_error(['message' => __('Failed to fetch preview images.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Failed to fetch preview images.', 'hello-figma'), 'code' => self::ERROR_CODES['FETCH_FAILED']]);
         }
 
         wp_send_json_success(['images' => $images]);
@@ -453,13 +498,13 @@ class Admin
         $node_id = sanitize_text_field(wp_unslash($_POST['node_id'] ?? ''));
 
         if (empty($file_key) || empty($node_id)) {
-            wp_send_json_error(['message' => __('File key and node ID are required.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('File key and node ID are required.', 'hello-figma'), 'code' => self::ERROR_CODES['MISSING_PARAMS']]);
         }
 
         $sections = $this->plugin->get_renderer()->get_sections_preview($file_key, $node_id);
 
         if ($sections === null) {
-            wp_send_json_error(['message' => __('Failed to preview sections.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Failed to preview sections.', 'hello-figma'), 'code' => self::ERROR_CODES['FETCH_FAILED']]);
         }
 
         wp_send_json_success(['sections' => $sections]);
@@ -469,18 +514,18 @@ class Admin
     {
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce
         if (!wp_verify_nonce(wp_unslash($_POST['nonce'] ?? ''), 'hello_figma_nonce')) {
-            wp_send_json_error(['message' => __('Security check failed.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Security check failed.', 'hello-figma'), 'code' => self::ERROR_CODES['SECURITY_FAILED']]);
         }
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma'), 'code' => self::ERROR_CODES['PERMISSION_DENIED']]);
         }
     }
 
     private function verify_ajax_readonly(): void
     {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma')]);
+            wp_send_json_error(['message' => __('Insufficient permissions.', 'hello-figma'), 'code' => self::ERROR_CODES['PERMISSION_DENIED']]);
         }
     }
 
@@ -518,5 +563,22 @@ class Admin
     private function get_file_key_from_post(string $field): string
     {
         return $this->parse_file_key(sanitize_text_field(wp_unslash($_POST[$field] ?? '')));
+    }
+
+    /**
+     * Calculate the maximum nesting depth of a nested array.
+     */
+    private static function array_depth(array $data): int
+    {
+        $max_depth = 1;
+        foreach ($data as $value) {
+            if (is_array($value)) {
+                $depth = 1 + self::array_depth($value);
+                if ($depth > $max_depth) {
+                    $max_depth = $depth;
+                }
+            }
+        }
+        return $max_depth;
     }
 }

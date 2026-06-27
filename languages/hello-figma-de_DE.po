@@ -1,0 +1,149 @@
+# German (Germany) translation for Hello Elementor Figma Sync
+# Copyright (C) 2026
+# This file is distributed under the GPLv3 license.
+#
+msgid ""
+msgstr ""
+Project-Id-Version: Hello Elementor Figma Sync 1.3.1\n
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: German\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Hello Elementor Figma Sync"
+msgstr "Hello Elementor Figma Sync"
+
+msgid "Convert Figma designs directly into editable Elementor templates."
+msgstr "Wandeln Sie Figma-Designs direkt in bearbeitbare Elementor-Vorlagen um."
+
+# Plugin description
+msgid "Figma Sync"
+msgstr "Figma-Synchronisierung"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Templates"
+msgstr "Vorlagen"
+
+msgid "Style Sync"
+msgstr "Stil-Synchronisierung"
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Figma Connection"
+msgstr "Figma-Verbindung"
+
+msgid "Connected"
+msgstr "Verbunden"
+
+msgid "Not Connected"
+msgstr "Nicht verbunden"
+
+msgid "Configure Token"
+msgstr "Token konfigurieren"
+
+msgid "Imported Templates"
+msgstr "Importierte Vorlagen"
+
+msgid "Quick Convert"
+msgstr "Schnell umwandeln"
+
+msgid "Figma File Key"
+msgstr "Figma-Dateischlüssel"
+
+msgid "Node ID (optional)"
+msgstr "Node-ID (optional)"
+
+msgid "Convert Now"
+msgstr "Jetzt umwandeln"
+
+msgid "Recent Imports"
+msgstr "Letzte Importe"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Actions"
+msgstr "Aktionen"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Edit with Elementor"
+msgstr "Mit Elementor bearbeiten"
+
+msgid "Export"
+msgstr "Exportieren"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "No Figma templates imported yet."
+msgstr "Noch keine Figma-Vorlagen importiert."
+
+msgid "Global Colors Sync"
+msgstr "Globale Farbsynchronisierung"
+
+msgid "Sync Colors"
+msgstr "Farben synchronisieren"
+
+msgid "Global Typography Sync"
+msgstr "Globale Typosynchronisierung"
+
+msgid "Sync Typography"
+msgstr "Typografie synchronisieren"
+
+msgid "Sync All Styles"
+msgstr "Alle Stile synchronisieren"
+
+msgid "Settings saved successfully."
+msgstr "Einstellungen erfolgreich gespeichert."
+
+msgid "Security check failed."
+msgstr "Sicherheitsprüfung fehlgeschlagen."
+
+msgid "Figma Personal Access Token"
+msgstr "Figma Personal Access Token"
+
+msgid "Default Figma File Key"
+msgstr "Standard-Figma-Dateischlüssel"
+
+msgid "Save Settings"
+msgstr "Einstellungen speichern"
+
+msgid "Figma Container"
+msgstr "Figma-Container"
+
+msgid "Figma Button"
+msgstr "Figma-Schaltfläche"
+
+msgid "Figma Image"
+msgstr "Figma-Bild"
+
+msgid "Figma Heading"
+msgstr "Figma-Überschrift"
+
+msgid "Figma Icon Box"
+msgstr "Figma-Icon-Box"
+
+msgid "Figma Section"
+msgstr "Figma-Abschnitt"
+
+msgid "Figma Field"
+msgstr "Figma-Feld"
+
+msgid "Figma Text Style"
+msgstr "Figma-Textstil"
+

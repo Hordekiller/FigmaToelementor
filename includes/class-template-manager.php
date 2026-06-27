@@ -25,6 +25,32 @@ class Template_Manager
      */
     public function save_template(array $elementor_data, string $title, string $file_key, string $type = 'page', string $node_name = '', string $file_name = '')
     {
+        // ── Schema validation (template-level critical, element-level warnings) ──
+        $validation = JsonNormalizer::validate_template($elementor_data);
+        if (!$validation['ok']) {
+            Logger::log('ERROR', 'TemplateManager', 'Template validation failed — aborting save', [
+                'title' => $title,
+                'file_key' => $file_key,
+                'errors' => $validation['errors'],
+            ]);
+            return new \WP_Error(
+                'template_validation_failed',
+                sprintf(
+                    __('Template validation failed: %s', 'hello-figma'),
+                    implode('; ', $validation['errors'])
+                )
+            );
+        }
+        foreach ($validation['errors'] as $error) {
+            Logger::log('WARNING', 'TemplateManager', 'Template validation warning: ' . $error, [
+                'title' => $title,
+                'file_key' => $file_key,
+            ]);
+        }
+
+        // ── Normalize to ensure correct JSON structure ──
+        $elementor_data = JsonNormalizer::normalize_template($elementor_data);
+
         // Extract just the content array for _elementor_data (Elementor stores elements directly)
         $content = $elementor_data['content'] ?? [$elementor_data];
 
@@ -38,6 +64,7 @@ class Template_Manager
             'file_key' => $file_key,
             'elementor_data_bytes' => $elementor_data_size,
             'top_level_element_count' => $element_count,
+            'validation_warnings' => count($validation['errors']),
         ]);
 
         $post_data = [
@@ -186,13 +213,18 @@ class Template_Manager
             if (empty($elementor_data)) {
                 return null;
             }
-            $template = [
+            $template = JsonNormalizer::normalize_template([
                 'version' => '0.4',
                 'title' => get_the_title($post_id),
                 'type' => 'page',
                 'content' => json_decode($elementor_data, true),
                 'page_settings' => [],
-            ];
+            ]);
+        }
+
+        // ── Normalize before export (ensures consistent structure) ──
+        if (is_array($template)) {
+            $template = JsonNormalizer::normalize_template($template);
         }
 
         $filename = sanitize_title(get_the_title($post_id)) . '-figma-template.json';

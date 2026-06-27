@@ -12,6 +12,21 @@ class Figma_API
     private const CACHE_TTL = HOUR_IN_SECONDS;
     private const RATE_LIMIT_KEY = 'hello_figma_rate_limit';
     private const TOKEN_OPTION = 'hello_figma_pat';
+    private const CRYPTO_VER_OPTION = 'hello_figma_crypto_version';
+    private const CACHE_METRIC_OPTION = 'hello_figma_cache_metrics';
+
+    // Log cache hit/miss at most once per N calls (1 in 20 = 5% sample)
+    private const CACHE_METRICS_SAMPLE_DENOM = 20;
+
+    // Crypto version constants
+    private const CRYPTO_V1_CBC = 1; // aes-256-cbc (legacy)
+    private const CRYPTO_V2_GCM = 2; // aes-256-gcm (AEAD, current)
+
+    private const CRYPTO_V2_PREFIX = 'v2:';
+
+    // GCM uses a 12-byte IV (NIST recommendation) + 16-byte authentication tag
+    private const GCM_IV_LEN = 12;
+    private const GCM_TAG_LEN = 16;
 
     private ?string $token = null;
 
@@ -31,6 +46,34 @@ class Figma_API
         }
     }
 
+    /**
+     * Re-encrypt the stored token using the latest crypto (v2 GCM).
+     * Called explicitly when you want to upgrade an existing token that
+     * was stored with an older cipher (v1 CBC).
+     */
+    public function upgrade_token_crypto(): bool
+    {
+        $stored = get_option(self::TOKEN_OPTION, '');
+        if ($stored === '') {
+            return false;
+        }
+
+        $plaintext = $this->decrypt_token($stored);
+        if ($plaintext === '' || $plaintext === $stored) {
+            return false; // Could not decrypt
+        }
+
+        // If it's already v2 GCM, nothing to do
+        if (str_starts_with($stored, self::CRYPTO_V2_PREFIX)) {
+            return true;
+        }
+
+        // Re-encrypt with v2 GCM
+        update_option(self::TOKEN_OPTION, $this->encrypt_token($plaintext));
+        update_option(self::CRYPTO_VER_OPTION, self::CRYPTO_V2_GCM);
+        return true;
+    }
+
     public function get_token(): string
     {
         return $this->token ?? '';
@@ -47,20 +90,51 @@ class Figma_API
             return '';
         }
         $key = wp_salt('AUTH_KEY');
-        $iv = openssl_random_pseudo_bytes(16);
-        $ciphertext = openssl_encrypt($plaintext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
-        return base64_encode($iv . $ciphertext);
+
+        // aes-256-gcm: 12-byte IV, 16-byte tag (AEAD)
+        $iv = openssl_random_pseudo_bytes(self::GCM_IV_LEN);
+        $tag = '';
+        $ciphertext = openssl_encrypt($plaintext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+        if ($ciphertext === false) {
+            // Fallback to CBC if GCM is unavailable (very old PHP)
+            $iv = openssl_random_pseudo_bytes(16);
+            $ciphertext = openssl_encrypt($plaintext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+            update_option(self::CRYPTO_VER_OPTION, self::CRYPTO_V1_CBC);
+            return base64_encode($iv . $ciphertext);
+        }
+
+        update_option(self::CRYPTO_VER_OPTION, self::CRYPTO_V2_GCM);
+        return self::CRYPTO_V2_PREFIX . base64_encode($iv . $ciphertext . $tag);
     }
 
-    private function decrypt_token(string $ciphertext_b64): string
+    private function decrypt_token(string $stored): string
     {
-        if ($ciphertext_b64 === '') {
+        if ($stored === '') {
             return '';
         }
 
-        $data = base64_decode($ciphertext_b64, true);
+        // v2: base64(iv + ciphertext + tag) — AEAD (aes-256-gcm)
+        if (str_starts_with($stored, self::CRYPTO_V2_PREFIX)) {
+            $data_b64 = substr($stored, strlen(self::CRYPTO_V2_PREFIX));
+            $data = base64_decode($data_b64, true);
+            if ($data === false || strlen($data) < self::GCM_IV_LEN + self::GCM_TAG_LEN) {
+                return $stored; // Corrupt — return as-is to avoid data loss
+            }
+
+            $iv = substr($data, 0, self::GCM_IV_LEN);
+            $tag = substr($data, -self::GCM_TAG_LEN);
+            $ciphertext = substr($data, self::GCM_IV_LEN, -self::GCM_TAG_LEN);
+            $key = wp_salt('AUTH_KEY');
+
+            $decrypted = openssl_decrypt($ciphertext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            return $decrypted !== false ? $decrypted : $stored;
+        }
+
+        // v1 (legacy): base64(iv(16) + ciphertext) — aes-256-cbc
+        $data = base64_decode($stored, true);
         if ($data === false || strlen($data) < 16) {
-            return $ciphertext_b64;
+            return $stored;
         }
 
         $iv = substr($data, 0, 16);
@@ -68,11 +142,7 @@ class Figma_API
         $key = wp_salt('AUTH_KEY');
         $decrypted = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
 
-        if ($decrypted === false) {
-            return $ciphertext_b64;
-        }
-
-        return $decrypted;
+        return $decrypted !== false ? $decrypted : $stored;
     }
 
     /**
@@ -83,10 +153,61 @@ class Figma_API
      * @param int|null $depth Response depth (1=canvases, 2=frames, null=full)
      * @return array|null
      */
+    /**
+     * Wrapper for cache reads that logs hit/miss at a configurable sample rate.
+     *
+     * @param string $cache_key
+     * @param string $context  Label for metrics (e.g. 'file', 'nodes', 'styles')
+     * @return mixed The cached value, or false on miss
+     */
+    private function cache_get(string $cache_key, string $context = 'general')
+    {
+        $value = get_transient($cache_key);
+        $this->log_cache_metric($value !== false ? 'hit' : 'miss', $context);
+        return $value;
+    }
+
+    /**
+     * Wrapper for cache writes.
+     */
+    private function cache_set(string $cache_key, $data, int $ttl, string $context = 'general'): void
+    {
+        set_transient($cache_key, $data, $ttl);
+        $this->log_cache_metric('set', $context);
+    }
+
+    /**
+     * Log cache metric at a configurable sample rate.
+     *
+     * Sample rate default: 1 in CACHE_METRICS_SAMPLE_DENOM calls.
+     * Override via filter: add_filter('hello_figma_cache_metrics_sample_rate', fn() => 5);
+     */
+    private function log_cache_metric(string $event, string $context): void
+    {
+        $sample_rate = (int) apply_filters('hello_figma_cache_metrics_sample_rate', self::CACHE_METRICS_SAMPLE_DENOM);
+        if ($sample_rate < 1) {
+            $sample_rate = 1;
+        }
+
+        $counter = get_transient(self::CACHE_METRIC_OPTION);
+        if ($counter === false) {
+            $counter = 0;
+        }
+        $counter++;
+        set_transient(self::CACHE_METRIC_OPTION, $counter, DAY_IN_SECONDS);
+
+        if ($counter % $sample_rate === 0) {
+            Logger::log('INFO', 'CacheMetrics', "cache_{$event}", [
+                'context' => $context,
+                'sample_rate' => $sample_rate,
+            ]);
+        }
+    }
+
     public function get_file(string $file_key, ?string $node_id = null, ?int $depth = null): ?array
     {
         $cache_key = 'hello_figma_file_' . $file_key . ($node_id ? "_$node_id" : '') . ($depth ? "_d{$depth}" : '');
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'file');
         if ($cached !== false) {
             return $cached;
         }
@@ -106,7 +227,7 @@ class Figma_API
         $data = $this->request($endpoint);
         if ($data !== null) {
             $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'file');
-            set_transient($cache_key, $data, $ttl);
+            $this->cache_set($cache_key, $data, $ttl, 'file');
         }
 
         return $data;
@@ -127,7 +248,7 @@ class Figma_API
 
         $ids = implode(',', $node_ids);
         $cache_key = 'hello_figma_nodes_' . $file_key . '_' . md5($ids);
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'nodes');
         if ($cached !== false) {
             return $cached;
         }
@@ -135,7 +256,7 @@ class Figma_API
         $data = $this->request("files/{$file_key}/nodes?" . http_build_query(['ids' => $ids]));
         if ($data !== null) {
             $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'nodes');
-            set_transient($cache_key, $data, $ttl);
+            $this->cache_set($cache_key, $data, $ttl, 'nodes');
         }
 
         return $data;
@@ -150,7 +271,7 @@ class Figma_API
     public function get_styles(string $file_key): ?array
     {
         $cache_key = 'hello_figma_styles_' . $file_key;
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'styles');
         if ($cached !== false) {
             return $cached;
         }
@@ -158,7 +279,7 @@ class Figma_API
         $data = $this->request("files/{$file_key}/styles");
         if ($data !== null) {
             $ttl = apply_filters('hello_figma_cache_ttl', HOUR_IN_SECONDS * 2, 'styles');
-            set_transient($cache_key, $data, $ttl);
+            $this->cache_set($cache_key, $data, $ttl, 'styles');
         }
 
         return $data;
@@ -180,7 +301,7 @@ class Figma_API
 
         $ids = implode(',', $node_ids);
         $cache_key = 'hello_figma_images_' . $file_key . '_' . md5($ids) . "_$format";
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'images');
         if ($cached !== false) {
             return $cached;
         }
@@ -192,7 +313,7 @@ class Figma_API
         ]));
         if ($data !== null && isset($data['images'])) {
             $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'images');
-            set_transient($cache_key, $data['images'], $ttl);
+            $this->cache_set($cache_key, $data['images'], $ttl, 'images');
             return $data['images'];
         }
 
@@ -208,7 +329,7 @@ class Figma_API
     public function get_variables(string $file_key): ?array
     {
         $cache_key = 'hello_figma_variables_' . $file_key;
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'variables');
         if ($cached !== false) {
             return $cached;
         }
@@ -216,7 +337,7 @@ class Figma_API
         $data = $this->request("files/{$file_key}/variables/local");
         if ($data !== null) {
             $ttl = apply_filters('hello_figma_cache_ttl', HOUR_IN_SECONDS * 2, 'variables');
-            set_transient($cache_key, $data, $ttl);
+            $this->cache_set($cache_key, $data, $ttl, 'variables');
         }
 
         return $data;
@@ -231,7 +352,7 @@ class Figma_API
     public function get_team_styles(string $team_id): ?array
     {
         $cache_key = 'hello_figma_team_styles_' . $team_id;
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'team_styles');
         if ($cached !== false) {
             return $cached;
         }
@@ -239,7 +360,7 @@ class Figma_API
         $data = $this->request("teams/{$team_id}/styles");
         if ($data !== null) {
             $ttl = apply_filters('hello_figma_cache_ttl', HOUR_IN_SECONDS * 4, 'team_styles');
-            set_transient($cache_key, $data, $ttl);
+            $this->cache_set($cache_key, $data, $ttl, 'team_styles');
         }
 
         return $data;
@@ -434,7 +555,7 @@ class Figma_API
 
         $ids = implode(',', $node_ids);
         $cache_key = 'hello_figma_thumb_' . $file_key . '_' . md5($ids);
-        $cached = get_transient($cache_key);
+        $cached = $this->cache_get($cache_key, 'thumbnail');
         if ($cached !== false) {
             return $cached;
         }
@@ -452,7 +573,7 @@ class Figma_API
 
         if ($data !== null && isset($data['images'])) {
             $ttl = apply_filters('hello_figma_cache_ttl', self::CACHE_TTL, 'thumbnail');
-            set_transient($cache_key, $data['images'], $ttl);
+            $this->cache_set($cache_key, $data['images'], $ttl, 'thumbnail');
             return $data['images'];
         }
 

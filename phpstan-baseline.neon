@@ -25,37 +25,25 @@ parameters:
 			path: dynamic-tags/class-figma-text.php
 
 		-
+			message: '#^Method HelloFigma\\Admin\:\:array_depth\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-admin.php
+
+		-
 			message: '#^Method HelloFigma\\Admin\:\:count_image_placeholders\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-admin.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:apply_absolute_positioning\(\) has parameter \$child with no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:collapse_empty_wrappers\(\) has parameter \$elements with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:apply_absolute_positioning\(\) has parameter \$element with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:apply_absolute_positioning\(\) has parameter \$parent with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:compute_relative_position\(\) has parameter \$child_node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:compute_relative_position\(\) has parameter \$parent_node with no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:collapse_empty_wrappers\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
@@ -68,6 +56,12 @@ parameters:
 
 		-
 			message: '#^Method HelloFigma\\Elementor_Renderer\:\:convert_file\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-elementor-renderer.php
+
+		-
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:convert_node\(\) has parameter \$grandparent_node with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
@@ -97,115 +91,7 @@ parameters:
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:detect_heading_level\(\) has parameter \$style with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_background\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_border\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_border_radius\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_button_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_container_dimensions\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_container_layout\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_flex_child_sizing\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_heading_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_icon_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_image_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_opacity\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_parent_sizing_mode\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
 			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:extract_shadow\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:find_image_in_subtree\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:find_image_in_subtree\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:find_text_nodes_in_subtree\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:find_text_nodes_in_subtree\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
@@ -223,79 +109,31 @@ parameters:
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:get_visible_fill\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:group_is_safe_to_flatten\(\) has parameter \$node with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:get_visible_fill\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:is_empty_wrapper\(\) has parameter \$element with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:node_needs_absolute_positioning\(\) has parameter \$child with no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:is_structural_widget\(\) has parameter \$element with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:resolve_type\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:maybe_transfer_element_id\(\) has parameter \$child with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
 
 		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:resolve_type\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:rgba_to_hex\(\) has parameter \$rgba with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:should_render\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:try_build_accordion\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:try_build_accordion\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:try_build_carousel\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:try_build_carousel\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:try_build_gallery\(\) has parameter \$node with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: includes/class-elementor-renderer.php
-
-		-
-			message: '#^Method HelloFigma\\Elementor_Renderer\:\:try_build_gallery\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method HelloFigma\\Elementor_Renderer\:\:maybe_transfer_element_id\(\) has parameter \$parent with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
@@ -311,6 +149,12 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-elementor-renderer.php
+
+		-
+			message: '#^Method HelloFigma\\Figma_API\:\:cache_set\(\) has parameter \$data with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: includes/class-figma-api.php
 
 		-
 			message: '#^Method HelloFigma\\Figma_API\:\:do_request\(\) return type has no value type specified in iterable type array\.$#'
@@ -445,6 +289,120 @@ parameters:
 			path: includes/class-image-handler.php
 
 		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:normalize_element\(\) has parameter \$element with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:normalize_element\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:normalize_template\(\) has parameter \$template with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:normalize_template\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:to_object\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:validate_element\(\) has parameter \$element with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\JsonNormalizer\:\:validate_template\(\) has parameter \$template with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-jsonnormalizer.php
+
+		-
+			message: '#^Method HelloFigma\\LayoutExtractor\:\:extract_container_dimensions\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-layoutextractor.php
+
+		-
+			message: '#^Method HelloFigma\\LayoutExtractor\:\:extract_container_layout\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-layoutextractor.php
+
+		-
+			message: '#^Method HelloFigma\\LayoutExtractor\:\:extract_flex_child_sizing\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-layoutextractor.php
+
+		-
+			message: '#^Method HelloFigma\\LayoutExtractor\:\:extract_parent_sizing_mode\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-layoutextractor.php
+
+		-
+			message: '#^Method HelloFigma\\NodeFilter\:\:should_render\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-nodefilter.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:apply_absolute_positioning\(\) has parameter \$child with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:apply_absolute_positioning\(\) has parameter \$element with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:apply_absolute_positioning\(\) has parameter \$parent with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:compute_relative_position\(\) has parameter \$child_node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:compute_relative_position\(\) has parameter \$parent_node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:compute_relative_position\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
+			message: '#^Method HelloFigma\\Positioning\:\:node_needs_absolute_positioning\(\) has parameter \$child with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-positioning.php
+
+		-
 			message: '#^Method HelloFigma\\Style_Sync\:\:add_editor_localizations\(\) has parameter \$config with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -499,6 +457,108 @@ parameters:
 			path: includes/class-style-sync.php
 
 		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:detect_heading_level\(\) has parameter \$style with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_background\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_border\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_border_radius\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_button_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_heading_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_icon_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_image_settings\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_opacity\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:extract_shadow\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:find_image_in_subtree\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:find_image_in_subtree\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:find_text_nodes_in_subtree\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:find_text_nodes_in_subtree\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:get_visible_fill\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:get_visible_fill\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
+			message: '#^Method HelloFigma\\StyleExtractor\:\:rgba_to_hex\(\) has parameter \$rgba with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-styleextractor.php
+
+		-
 			message: '#^Method HelloFigma\\Template_Manager\:\:export_template\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -527,6 +587,54 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: includes/class-template-manager.php
+
+		-
+			message: '#^Method HelloFigma\\TypeResolver\:\:resolve_type\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-typeresolver.php
+
+		-
+			message: '#^Method HelloFigma\\TypeResolver\:\:resolve_type\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-typeresolver.php
+
+		-
+			message: '#^Method HelloFigma\\WidgetConverters\:\:try_build_accordion\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-widgetconverters.php
+
+		-
+			message: '#^Method HelloFigma\\WidgetConverters\:\:try_build_accordion\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-widgetconverters.php
+
+		-
+			message: '#^Method HelloFigma\\WidgetConverters\:\:try_build_carousel\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-widgetconverters.php
+
+		-
+			message: '#^Method HelloFigma\\WidgetConverters\:\:try_build_carousel\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-widgetconverters.php
+
+		-
+			message: '#^Method HelloFigma\\WidgetConverters\:\:try_build_gallery\(\) has parameter \$node with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-widgetconverters.php
+
+		-
+			message: '#^Method HelloFigma\\WidgetConverters\:\:try_build_gallery\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: includes/class-widgetconverters.php
 
 		-
 			message: '#^Method HelloFigma\\Widgets\\Figma_Button\:\:get_categories\(\) return type has no value type specified in iterable type array\.$#'

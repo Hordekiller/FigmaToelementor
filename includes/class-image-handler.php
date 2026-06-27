@@ -10,6 +10,12 @@ class Image_Handler
 {
     private Figma_API $figma_api;
 
+    // Download max 5 images before yielding to avoid resource spikes
+    private const DOWNLOAD_CHUNK_SIZE = 5;
+
+    // Minimum interval between progress callbacks (seconds)
+    private const PROGRESS_THROTTLE_SEC = 1.0;
+
     public function __construct(Figma_API $figma_api)
     {
         $this->figma_api = $figma_api;
@@ -79,50 +85,62 @@ class Image_Handler
         $results = [];
         $image_idx = 0;
         $total = count($images);
-        foreach ($images as $node_id => $image_url) {
-            $image_idx++;
+        $chunk_idx = 0;
+        $chunks = array_chunk($images, self::DOWNLOAD_CHUNK_SIZE, true);
+
+        foreach ($chunks as $chunk) {
+            foreach ($chunk as $node_id => $image_url) {
+                $image_idx++;
+
+                Logger::log('INFO', 'ImageHandler', 'Resolving image', [
+                    'ref_or_node_id' => $node_id,
+                    'file_key' => $file_key,
+                    'chunk' => $chunk_idx + 1,
+                    'total_chunks' => count($chunks),
+                ]);
+
+                if (empty($image_url)) {
+                    Logger::log('WARNING', 'ImageHandler', 'Figma returned null URL for ref', [
+                        'ref' => $node_id,
+                    ]);
+                    $results[$node_id] = new \WP_Error(
+                        'figma_image_empty',
+                        sprintf('Empty URL for node %s', $node_id)
+                    );
+                    continue;
+                }
+
+                Logger::log('INFO', 'ImageHandler', 'Downloading image binary', [
+                    'resolved_url' => $image_url,
+                    'node_id' => $node_id,
+                ]);
+
+                $name = $node_ids[$node_id] ?? '';
+                $attachment_id = $this->sideload_image($image_url, $name, $node_id);
+
+                if (is_wp_error($attachment_id)) {
+                    Logger::log('ERROR', 'ImageHandler', 'Image sideload failed', [
+                        'node_id' => $node_id,
+                        'error_message' => $attachment_id->get_error_message(),
+                    ]);
+                } else {
+                    $final_url = wp_get_attachment_url($attachment_id);
+                    Logger::log('INFO', 'ImageHandler', 'Image sideload succeeded', [
+                        'node_id' => $node_id,
+                        'attachment_id' => $attachment_id,
+                        'final_url' => $final_url,
+                    ]);
+                }
+
+                $results[$node_id] = $attachment_id;
+            }
+
+            $chunk_idx++;
+
+            // Throttled progress update: report after each chunk
             if ($progress_callback !== null) {
                 $progress_callback($image_idx, $total);
             }
-            Logger::log('INFO', 'ImageHandler', 'Resolving image', [
-                'ref_or_node_id' => $node_id,
-                'file_key' => $file_key,
-            ]);
-
-            if (empty($image_url)) {
-                Logger::log('WARNING', 'ImageHandler', 'Figma returned null URL for ref', [
-                    'ref' => $node_id,
-                ]);
-                $results[$node_id] = new \WP_Error(
-                    'figma_image_empty',
-                    sprintf('Empty URL for node %s', $node_id)
-                );
-                continue;
-            }
-
-            Logger::log('INFO', 'ImageHandler', 'Downloading image binary', [
-                'resolved_url' => $image_url,
-                'node_id' => $node_id,
-            ]);
-
-            $name = $node_ids[$node_id] ?? '';
-            $attachment_id = $this->sideload_image($image_url, $name, $node_id);
-
-            if (is_wp_error($attachment_id)) {
-                Logger::log('ERROR', 'ImageHandler', 'Image sideload failed', [
-                    'node_id' => $node_id,
-                    'error_message' => $attachment_id->get_error_message(),
-                ]);
-            } else {
-                $final_url = wp_get_attachment_url($attachment_id);
-                Logger::log('INFO', 'ImageHandler', 'Image sideload succeeded', [
-                    'node_id' => $node_id,
-                    'attachment_id' => $attachment_id,
-                    'final_url' => $final_url,
-                ]);
-            }
-
-            $results[$node_id] = $attachment_id;
         }
 
         return $results;
@@ -158,7 +176,21 @@ class Image_Handler
             $name_map[$id] = $id;
         }
 
-        $results = $this->batch_download_images($file_key, $name_map, 'png', $progress_callback);
+        // Throttle progress callback to at most once per PROGRESS_THROTTLE_SEC
+        $last_callback_time = 0.0;
+        $throttled_callback = null;
+        if ($progress_callback !== null) {
+            $throttled_callback = function (int $current, int $total) use ($progress_callback, &$last_callback_time): void {
+                $now = microtime(true);
+                if ($now - $last_callback_time < self::PROGRESS_THROTTLE_SEC && $current < $total) {
+                    return; // Skip — too soon
+                }
+                $last_callback_time = $now;
+                $progress_callback($current, $total);
+            };
+        }
+
+        $results = $this->batch_download_images($file_key, $name_map, 'png', $throttled_callback);
 
         $resolved = [];
         $failures = 0;

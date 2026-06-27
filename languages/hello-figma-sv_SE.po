@@ -1,0 +1,149 @@
+# Swedish (Sweden) translation for Hello Elementor Figma Sync
+# Copyright (C) 2024
+# This file is distributed under the GPLv3 license.
+#
+msgid ""
+msgstr ""
+Project-Id-Version: Hello Elementor Figma Sync 1.3.1\n
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: Swedish\n"
+"Language: sv_SE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Hello Elementor Figma Sync"
+msgstr "Hello Elementor Figma Sync"
+
+msgid "Convert Figma designs directly into editable Elementor templates."
+msgstr "Konvertera Figma-designs direkt till redigerbara Elementor-mallar."
+
+# Plugin description
+msgid "Figma Sync"
+msgstr "Figma-synk"
+
+msgid "Dashboard"
+msgstr "Skrivbord"
+
+msgid "Templates"
+msgstr "Mall" 
+
+msgid "Style Sync"
+msgstr "Stilsynk"
+
+msgid "Settings"
+msgstr "Inställningar"
+
+msgid "Figma Connection"
+msgstr "Figma-anslutning"
+
+msgid "Connected"
+msgstr "Ansluten"
+
+msgid "Not Connected"
+msgstr "Inte ansluten"
+
+msgid "Configure Token"
+msgstr "Konfigurera token"
+
+msgid "Imported Templates"
+msgstr "Importerade mallar"
+
+msgid "Quick Convert"
+msgstr "Snabbkonvertera"
+
+msgid "Figma File Key"
+msgstr "Figma-filnyckel"
+
+msgid "Node ID (optional)"
+msgstr "Node-ID (valfritt)"
+
+msgid "Convert Now"
+msgstr "Konvertera nu"
+
+msgid "Recent Imports"
+msgstr "Senaste importerna"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Actions"
+msgstr "Åtgärder"
+
+msgid "Edit"
+msgstr "Redigera"
+
+msgid "Edit with Elementor"
+msgstr "Redigera med Elementor"
+
+msgid "Export"
+msgstr "Exportera"
+
+msgid "Delete"
+msgstr "Ta bort"
+
+msgid "No Figma templates imported yet."
+msgstr "Inga Figma-mallar har importerats ännu."
+
+msgid "Global Colors Sync"
+msgstr "Synkronisera globala färger"
+
+msgid "Sync Colors"
+msgstr "Synkronisera färger"
+
+msgid "Global Typography Sync"
+msgstr "Synkronisera global typografi"
+
+msgid "Sync Typography"
+msgstr "Synkronisera typografi"
+
+msgid "Sync All Styles"
+msgstr "Synkronisera alla stilar"
+
+msgid "Settings saved successfully."
+msgstr "Inställningarna sparades." 
+
+msgid "Security check failed."
+msgstr "Säkerhetskontrollen misslyckades."
+
+msgid "Figma Personal Access Token"
+msgstr "Figma personal access-token"
+
+msgid "Default Figma File Key"
+msgstr "Standard Figma-filnyckel"
+
+msgid "Save Settings"
+msgstr "Spara inställningar"
+
+msgid "Figma Container"
+msgstr "Figma-container"
+
+msgid "Figma Button"
+msgstr "Figma-knapp"
+
+msgid "Figma Image"
+msgstr "Figma-bild"
+
+msgid "Figma Heading"
+msgstr "Figma-rubrik"
+
+msgid "Figma Icon Box"
+msgstr "Figma-ikonruta"
+
+msgid "Figma Section"
+msgstr "Figma-sektion"
+
+msgid "Figma Field"
+msgstr "Figma-fält"
+
+msgid "Figma Text Style"
+msgstr "Figma-textstil"
+

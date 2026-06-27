@@ -1,5 +1,5 @@
 # Persian (Iran) translation for Hello Elementor Figma Sync
-# Copyright (C) 2024
+# Copyright (C) 2026
 # This file is distributed under the GPLv3 license.
 #
 msgid ""

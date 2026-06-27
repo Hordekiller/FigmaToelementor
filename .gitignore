@@ -39,6 +39,7 @@ build/
 
 # Analysis
 ANALYSIS.md
+project_audit/
 
 # Wiki (separate orphan branch)
 wiki/
@@ -46,3 +47,7 @@ wiki/
 # Environment
 .env
 .env.local
+
+# Temp / dev artifacts
+phpstan-baseline-merged.neon
+TODO.md

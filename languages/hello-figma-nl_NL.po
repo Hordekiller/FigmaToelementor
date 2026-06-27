@@ -1,0 +1,149 @@
+# Dutch (Netherlands) translation for Hello Elementor Figma Sync
+# Copyright (C) 2026
+# This file is distributed under the GPLv3 license.
+#
+msgid ""
+msgstr ""
+Project-Id-Version: Hello Elementor Figma Sync 1.3.1\n
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: Dutch\n"
+"Language: nl_NL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Hello Elementor Figma Sync"
+msgstr "Hello Elementor Figma Sync"
+
+msgid "Convert Figma designs directly into editable Elementor templates."
+msgstr "Converteer Figma-ontwerpen direct naar bewerkbare Elementor-sjablonen."
+
+# Plugin description
+msgid "Figma Sync"
+msgstr "Figma-sync"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Templates"
+msgstr "Sjablonen"
+
+msgid "Style Sync"
+msgstr "Stijl-synchronisatie"
+
+msgid "Settings"
+msgstr "Instellingen"
+
+msgid "Figma Connection"
+msgstr "Figma-verbinding"
+
+msgid "Connected"
+msgstr "Verbonden"
+
+msgid "Not Connected"
+msgstr "Niet verbonden"
+
+msgid "Configure Token"
+msgstr "Token configureren"
+
+msgid "Imported Templates"
+msgstr "Geïmporteerde sjablonen"
+
+msgid "Quick Convert"
+msgstr "Snelle conversie"
+
+msgid "Figma File Key"
+msgstr "Figma-bestandskey"
+
+msgid "Node ID (optional)"
+msgstr "Node-ID (optioneel)"
+
+msgid "Convert Now"
+msgstr "Nu converteren"
+
+msgid "Recent Imports"
+msgstr "Recente importen"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Actions"
+msgstr "Acties"
+
+msgid "Edit"
+msgstr "Bewerken"
+
+msgid "Edit with Elementor"
+msgstr "Bewerken met Elementor"
+
+msgid "Export"
+msgstr "Exporteren"
+
+msgid "Delete"
+msgstr "Verwijderen"
+
+msgid "No Figma templates imported yet."
+msgstr "Er zijn nog geen Figma-sjablonen geïmporteerd."
+
+msgid "Global Colors Sync"
+msgstr "Globale kleuren synchroniseren"
+
+msgid "Sync Colors"
+msgstr "Kleuren synchroniseren"
+
+msgid "Global Typography Sync"
+msgstr "Globale typografie synchroniseren"
+
+msgid "Sync Typography"
+msgstr "Typografie synchroniseren"
+
+msgid "Sync All Styles"
+msgstr "Alle stijlen synchroniseren"
+
+msgid "Settings saved successfully."
+msgstr "Instellingen succesvol opgeslagen."
+
+msgid "Security check failed."
+msgstr "Beveiligingscontrole mislukt."
+
+msgid "Figma Personal Access Token"
+msgstr "Figma Personal Access Token"
+
+msgid "Default Figma File Key"
+msgstr "Standaard Figma-bestandskey"
+
+msgid "Save Settings"
+msgstr "Instellingen opslaan"
+
+msgid "Figma Container"
+msgstr "Figma-container"
+
+msgid "Figma Button"
+msgstr "Figma-knop"
+
+msgid "Figma Image"
+msgstr "Figma-afbeelding"
+
+msgid "Figma Heading"
+msgstr "Figma-kop"
+
+msgid "Figma Icon Box"
+msgstr "Figma-ikonenbox"
+
+msgid "Figma Section"
+msgstr "Figma-sectie"
+
+msgid "Figma Field"
+msgstr "Figma-veld"
+
+msgid "Figma Text Style"
+msgstr "Figma-tekststijl"
+

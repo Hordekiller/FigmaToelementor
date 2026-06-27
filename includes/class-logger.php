@@ -48,8 +48,22 @@ class Logger
             $line = "[{$timestamp}]{$run} [{$level}] [{$component}] {$message}{$ctx}" . PHP_EOL;
 
             file_put_contents($log_file, $line, FILE_APPEND | LOCK_EX);
+
+            /**
+             * Fires after a log entry is written.
+             * Can be used by external monitoring, admin UI alerts, etc.
+             *
+             * @param string $level     Log level (ERROR, WARNING, INFO, DEBUG)
+             * @param string $component Component name
+             * @param string $message   Log message
+             * @param array  $context   Structured context data
+             */
+            do_action('hello_figma_logged', $level, $component, $message, $context);
         } catch (\Throwable $e) {
-            // fail silently — never let logging break the import
+            // Never let logging break the import, but surface critical errors
+            if (in_array($level, ['ERROR', 'CRITICAL'], true)) {
+                error_log('HelloFigma Logger failed: ' . $e->getMessage());
+            }
         }
     }
 

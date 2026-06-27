@@ -1,0 +1,149 @@
+# Turkish (Turkey) translation for Hello Elementor Figma Sync
+# Copyright (C) 2026
+# This file is distributed under the GPLv3 license.
+#
+msgid ""
+msgstr ""
+Project-Id-Version: Hello Elementor Figma Sync 1.3.1\n
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: Turkish\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Hello Elementor Figma Sync"
+msgstr "Hello Elementor Figma Senkronizasyonu"
+
+msgid "Convert Figma designs directly into editable Elementor templates."
+msgstr "Figma tasarımlarını doğrudan düzenlenebilir Elementor şablonlarına dönüştürün."
+
+# Plugin description
+msgid "Figma Sync"
+msgstr "Figma Senkronizasyonu"
+
+msgid "Dashboard"
+msgstr "Kontrol Paneli"
+
+msgid "Templates"
+msgstr "Şablonlar"
+
+msgid "Style Sync"
+msgstr "Stil Senkronizasyonu"
+
+msgid "Settings"
+msgstr "Ayarlar"
+
+msgid "Figma Connection"
+msgstr "Figma Bağlantısı"
+
+msgid "Connected"
+msgstr "Bağlandı"
+
+msgid "Not Connected"
+msgstr "Bağlı değil"
+
+msgid "Configure Token"
+msgstr "Token Ayarla"
+
+msgid "Imported Templates"
+msgstr "İçe Aktarılan Şablonlar"
+
+msgid "Quick Convert"
+msgstr "Hızlı Dönüştür"
+
+msgid "Figma File Key"
+msgstr "Figma Dosya Anahtarı"
+
+msgid "Node ID (optional)"
+msgstr "Node ID (opsiyonel)"
+
+msgid "Convert Now"
+msgstr "Şimdi Dönüştür"
+
+msgid "Recent Imports"
+msgstr "Son İçe Aktarımlar"
+
+msgid "Title"
+msgstr "Başlık"
+
+msgid "Type"
+msgstr "Tür"
+
+msgid "Date"
+msgstr "Tarih"
+
+msgid "Actions"
+msgstr "İşlemler"
+
+msgid "Edit"
+msgstr "Düzenle"
+
+msgid "Edit with Elementor"
+msgstr "Elementor ile Düzenle"
+
+msgid "Export"
+msgstr "Dışa Aktar"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "No Figma templates imported yet."
+msgstr "Henüz Figma şablonları içe aktarılmadı."
+
+msgid "Global Colors Sync"
+msgstr "Genel Renk Senkronizasyonu"
+
+msgid "Sync Colors"
+msgstr "Renkleri Senkronize Et"
+
+msgid "Global Typography Sync"
+msgstr "Genel Tipografi Senkronizasyonu"
+
+msgid "Sync Typography"
+msgstr "Tipografiyi Senkronize Et"
+
+msgid "Sync All Styles"
+msgstr "Tüm Stilleri Senkronize Et"
+
+msgid "Settings saved successfully."
+msgstr "Ayarlar başarıyla kaydedildi."
+
+msgid "Security check failed."
+msgstr "Güvenlik kontrolü başarısız oldu."
+
+msgid "Figma Personal Access Token"
+msgstr "Figma Kişisel Erişim Token'ı"
+
+msgid "Default Figma File Key"
+msgstr "Varsayılan Figma Dosya Anahtarı"
+
+msgid "Save Settings"
+msgstr "Ayarları Kaydet"
+
+msgid "Figma Container"
+msgstr "Figma Konteyner"
+
+msgid "Figma Button"
+msgstr "Figma Düğmesi"
+
+msgid "Figma Image"
+msgstr "Figma Görseli"
+
+msgid "Figma Heading"
+msgstr "Figma Başlığı"
+
+msgid "Figma Icon Box"
+msgstr "Figma İkon Kutusu"
+
+msgid "Figma Section"
+msgstr "Figma Bölümü"
+
+msgid "Figma Field"
+msgstr "Figma Alanı"
+
+msgid "Figma Text Style"
+msgstr "Figma Metin Stili"
+

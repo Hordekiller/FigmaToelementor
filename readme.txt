@@ -86,13 +86,25 @@ Yes. Full RTL support with Persian translation included.
 == Changelog ==
 
 = 1.3.1 =
-* Fix: PHPStan baseline regenerated (154→100 errors, all missingType.iterableValue)
-* Fix: Added proper WordPress/Elementor stubs for static analysis
-* Fix: Removed blanket PHPStan ignores — all root causes addressed
-* Fix: `wp_insert_post` now passes `$wp_error=true` for proper error handling
+* New: Elementor_Renderer refactored into 7 single-responsibility classes (NodeFilter, TypeResolver, StyleExtractor, LayoutExtractor, WidgetConverters, Positioning, JsonNormalizer)
+* New: JsonNormalizer with normalize + validate on every save_template (critical errors → WP_Error, warnings → log)
+* New: Snapshot testing — 6 golden scenarios, 83 total tests across 5 suites
+* New: AES-256-GCM crypto upgrade (v2: prefix, backward-compatible CBC fallback)
+* New: Cache metrics with per-type TTL, sampled logging (1:20), dedicated cache_get/cache_set wrappers
+* New: Image download chunking (groups of 5) + progress throttling (≤1 call/sec)
+* New: 9 additional language .po files (total 10: fa_IR, en_US, de_DE, es_ES, fr_FR, it_IT, nl_NL, pt_BR, sv_SE, tr_TR)
+* New: "Recent Activity Log" section in Dashboard
+* Enhancement: All 23 AJAX error responses include a stable `code` string for programmatic handling
+* Enhancement: Logger error_log() fallback for ERROR/CRITICAL + `hello_figma_logged` action hook
+* Enhancement: Rotated absolute-positioned nodes logged as WARNING with node_id/name/rotation
+* Enhancement: AJAX input hardening — format enum validation, overrides size limit (10KB) and depth limit (5)
+* Enhancement: 3 RTL test cases for map_align (CSS logical properties flex-start/flex-end)
+* Fix: PHPStan Level 6 — 0 errors (baseline only for missingType.iterableValue)
+* Fix: `save_template` uses `$validation['ok']` instead of fragile str_contains heuristic
 * Fix: `$run_id` typo in Logger resolved
 * Fix: `should_position_absolute()` renamed to `node_needs_absolute_positioning()`
-* Docs: README.md and readme.txt accuracy pass (license table, features, known limitations)
+* Fix: 16 fixture entries for TypeResolver (12 mapping rules, 4 edge cases)
+* Docs: README.md overhaul — new Project Status table (done/incomplete/help-wanted), full language list, updated architecture diagram, honest known limitations
 
 = 1.3.0 =
 * New: Absolute positioning — Figma absoluteBoundingBox converted to Elementor position:absolute
