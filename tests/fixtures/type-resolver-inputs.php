@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Fixture data for TypeResolver tests.
  *

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Snapshot test runner.
  *

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Minimal WordPress function stubs for CLI test environment.
  */

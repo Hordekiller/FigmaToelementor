@@ -1,4 +1,5 @@
 <?php
+
 define('ABSPATH', '/tmp');
 require '/home/solo/development/Figma/includes/class-logger.php';
 require '/home/solo/development/Figma/includes/class-styleextractor.php';
@@ -13,10 +14,15 @@ $fixtures = require '/home/solo/development/Figma/tests/fixtures/type-resolver-i
 $passed = 0;
 $total = 0;
 
-function t(string $label, bool $cond, int &$p, int &$t): void {
+function t(string $label, bool $cond, int &$p, int &$t): void
+{
     $t++;
-    if ($cond) { $p++; echo "  PASS: $label\n"; }
-    else { echo "  FAIL: $label\n"; }
+    if ($cond) {
+        $p++;
+        echo "  PASS: $label\n";
+    } else {
+        echo "  FAIL: $label\n";
+    }
 }
 
 echo "--- TypeResolver::resolve_type ---\n";

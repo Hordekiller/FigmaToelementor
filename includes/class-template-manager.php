@@ -36,6 +36,7 @@ class Template_Manager
             return new \WP_Error(
                 'template_validation_failed',
                 sprintf(
+                    /* translators: %s: validation error messages joined by semicolons */
                     __('Template validation failed: %s', 'hello-figma'),
                     implode('; ', $validation['errors'])
                 )

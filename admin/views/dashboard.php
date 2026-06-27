@@ -167,7 +167,9 @@ $stats = $stats ?? ['total' => 0, 'recent' => []];
 <!-- Recent Logs -->
 <div class="hello-figma-card" style="margin-top: 20px;">
     <h3><?php esc_html_e('Recent Activity Log', 'hello-figma'); ?></h3>
-    <div style="max-height:300px;overflow-y:auto;background:#f5f5f5;padding:10px;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;">
+    <div style="max-height:300px;overflow-y:auto;background:#f5f5f5;padding:10px;
+                border:1px solid #ddd;border-radius:4px;font-family:monospace;
+                font-size:12px;line-height:1.5;white-space:pre-wrap;">
         <?php
         $log_contents = \HelloFigma\Logger::get_latest_log_contents(50);
         echo $log_contents !== '' ? esc_html($log_contents) : esc_html__('No recent log entries.', 'hello-figma');

@@ -8,6 +8,7 @@
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
     <exclude-pattern>.git</exclude-pattern>
+    <exclude-pattern>*/project_audit/*</exclude-pattern>
 
     <arg name="basepath" value="."/>
     <arg name="colors"/>

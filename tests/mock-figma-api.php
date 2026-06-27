@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Mock Figma_API that returns canned node data for snapshot tests.
  */
