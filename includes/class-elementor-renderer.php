@@ -310,6 +310,28 @@ class Elementor_Renderer
             }
         }
 
+        // ── Stats → Counter: attempt structural conversion ──
+        if ($component_type === 'stats') {
+            $container_types = ['FRAME', 'GROUP', 'COMPONENT', 'INSTANCE'];
+            if (in_array($figma_type, $container_types, true)) {
+                $stats_element = $this->widget_converters->try_build_stats($node);
+                if ($stats_element !== null) {
+                    return $stats_element;
+                }
+            }
+        }
+
+        // ── Social → Social Icons: attempt structural conversion ──
+        if ($component_type === 'social') {
+            $container_types = ['FRAME', 'GROUP', 'COMPONENT', 'INSTANCE'];
+            if (in_array($figma_type, $container_types, true)) {
+                $social_icons_element = $this->widget_converters->try_build_social_icons($node, $component_type);
+                if ($social_icons_element !== null) {
+                    return $social_icons_element;
+                }
+            }
+        }
+
         // ── GROUP flattening: skip container, return children directly ──
         if ($figma_type === 'GROUP' && $grandparent_node !== null && $this->group_is_safe_to_flatten($node)) {
             $flattened = [];

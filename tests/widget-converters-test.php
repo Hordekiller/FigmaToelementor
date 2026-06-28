@@ -69,4 +69,27 @@ $result2 = $conv->try_build_gallery([
 ]);
 t('2 children no images → null (ratio 0/2=0 < 0.7)', $result2 === null, $passed, $total);
 
+echo "--- Social icons detection ---\n";
+$social = $conv->try_build_social_icons([
+    'name' => 'Social',
+    'children' => [
+        ['id' => 's1', 'name' => 'Instagram', 'type' => 'VECTOR'],
+        ['id' => 's2', 'name' => 'Facebook', 'type' => 'VECTOR'],
+    ],
+], 'social');
+t('2 icon-like children → social icons', $social !== null, $passed, $total);
+if ($social !== null) {
+    t('social widgetType', $social['widgetType'] === 'social-icons', $passed, $total);
+    t('social repeater key', isset($social['settings']->social_icon_list) && count($social['settings']->social_icon_list) === 2, $passed, $total);
+    t('social icon field present', isset($social['settings']->social_icon_list[0]['social_icon']['value']), $passed, $total);
+    t('social link field present', isset($social['settings']->social_icon_list[0]['link']['url']), $passed, $total);
+}
+
+echo "--- Stats parsing ---\n";
+t('$2.5M → 2.5M', $conv->parse_stat_value('$2.5M') === '2.5M', $passed, $total);
+t('98% → 98%', $conv->parse_stat_value('98%') === '98%', $passed, $total);
+t('1,200 → 1200', $conv->parse_stat_value('1,200') === '1200', $passed, $total);
+t('plain 42 → 42', $conv->parse_stat_value('plain 42') === '42', $passed, $total);
+t('non-numeric → null', $conv->parse_stat_value('hello world') === null, $passed, $total);
+
 echo "\n--- RESULTS: $passed/$total ---\n";

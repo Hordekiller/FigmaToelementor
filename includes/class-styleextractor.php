@@ -223,8 +223,9 @@ class StyleExtractor
         $has_typography = false;
         $typo = [];
 
-        if (!empty($style['fontFamily'])) {
-            $typo['font_family'] = $style['fontFamily'];
+        $font_family = $style['fontFamily'] ?? ($style['fontName']['family'] ?? null);
+        if (!empty($font_family)) {
+            $typo['font_family'] = $font_family;
             $has_typography = true;
         }
         if (!empty($style['fontSize'])) {
@@ -234,8 +235,9 @@ class StyleExtractor
             ];
             $has_typography = true;
         }
-        if (!empty($style['fontWeight'])) {
-            $typo['font_weight'] = (string) $style['fontWeight'];
+        $font_weight = $style['fontWeight'] ?? ($style['fontName']['style'] ?? null);
+        if (!empty($font_weight)) {
+            $typo['font_weight'] = (string) $font_weight;
             $has_typography = true;
         }
         if (isset($style['lineHeightPx']) && $style['lineHeightPx'] > 0) {

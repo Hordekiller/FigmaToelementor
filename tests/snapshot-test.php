@@ -46,6 +46,10 @@ $scenarios = [
     4 => '04-group-flattening',
     5 => '05-accordion-faq',
     6 => '06-carousel-gallery',
+    7 => '07-stats-positive',
+    8 => '08-stats-fallback',
+    9 => '09-social-icons-recognized',
+    10 => '10-social-icons-mixed',
 ];
 
 // ── CLI flags ──

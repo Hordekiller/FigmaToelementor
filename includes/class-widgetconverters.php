@@ -185,4 +185,148 @@ class WidgetConverters
             'elements' => [],
         ];
     }
+
+    public function parse_stat_value(string $text): ?string
+    {
+        if (!preg_match('/(?:^|\\s)([$€£])?\\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]+)?|[0-9]+(?:\\.[0-9]+)?)([kKmMbB%]?)(?:\\b|$)/', $text, $matches)) {
+            return null;
+        }
+
+        $number = str_replace(',', '', $matches[2]);
+        $suffix = $matches[3] ?? '';
+        if ($suffix === '') {
+            return $number;
+        }
+
+        return $number . $suffix;
+    }
+
+    public function try_build_stats(array $node): ?array
+    {
+        $children = $node['children'] ?? [];
+        if (count($children) < 1) {
+            return null;
+        }
+
+        $items = [];
+        foreach ($children as $child) {
+            $texts = $this->style_extractor->find_text_nodes_in_subtree($child, 1);
+            if (empty($texts)) {
+                continue;
+            }
+
+            $stat_text = $texts[0]['characters'] ?? '';
+            $parsed = $this->parse_stat_value((string) $stat_text);
+            if ($parsed === null) {
+                continue;
+            }
+
+            $items[] = [
+                'number' => $parsed,
+                'label' => trim((string) preg_replace('/^[^A-Za-z]+/', '', $stat_text)) ?: ($child['name'] ?? ''),
+            ];
+        }
+
+        if (empty($items)) {
+            return null;
+        }
+
+        $settings = new \stdClass();
+        $settings->editor = $items;
+
+        return [
+            'id' => ($this->id_generator)(),
+            'elType' => 'widget',
+            'widgetType' => 'counter',
+            'isInner' => false,
+            'settings' => $settings,
+            'elements' => [],
+        ];
+    }
+
+    public function try_build_social_icons(array $node, string $component_type): ?array
+    {
+        $children = $node['children'] ?? [];
+        if (count($children) < 2) {
+            return null;
+        }
+
+        $platform_map = [
+            'instagram' => ['value' => 'fab fa-instagram', 'library' => 'fa-brands'],
+            'facebook' => ['value' => 'fab fa-facebook-f', 'library' => 'fa-brands'],
+            'twitter' => ['value' => 'fab fa-x-twitter', 'library' => 'fa-brands'],
+            'x' => ['value' => 'fab fa-x-twitter', 'library' => 'fa-brands'],
+            'linkedin' => ['value' => 'fab fa-linkedin', 'library' => 'fa-brands'],
+            'youtube' => ['value' => 'fab fa-youtube', 'library' => 'fa-brands'],
+            'tiktok' => ['value' => 'fab fa-tiktok', 'library' => 'fa-brands'],
+            'pinterest' => ['value' => 'fab fa-pinterest', 'library' => 'fa-brands'],
+            'whatsapp' => ['value' => 'fab fa-whatsapp', 'library' => 'fa-brands'],
+            'telegram' => ['value' => 'fab fa-telegram', 'library' => 'fa-brands'],
+            'github' => ['value' => 'fab fa-github', 'library' => 'fa-brands'],
+        ];
+
+        $items = [];
+        $icon_like_count = 0;
+        foreach ($children as $child) {
+            $resolved = $this->style_extractor->find_image_in_subtree($child, 1);
+            if ($resolved !== null) {
+                continue;
+            }
+
+            $type = $child['type'] ?? '';
+            if (!in_array($type, ['VECTOR', 'BOOLEAN_OPERATION', 'STAR', 'POLYGON', 'RECTANGLE', 'ELLIPSE'], true)) {
+                continue;
+            }
+
+            $icon_like_count++;
+            $name = mb_strtolower((string) ($child['name'] ?? ''));
+            $icon = ['value' => 'fab fa-link', 'library' => 'fa-solid'];
+            $matched = false;
+            foreach ($platform_map as $needle => $mapped_icon) {
+                if ($needle === 'twitter' && (str_contains($name, 'x') || str_contains($name, 'twitter'))) {
+                    $icon = $mapped_icon;
+                    $matched = true;
+                    break;
+                }
+                if ($needle !== 'twitter' && str_contains($name, $needle)) {
+                    $icon = $mapped_icon;
+                    $matched = true;
+                    break;
+                }
+            }
+
+            if (!$matched) {
+                Logger::log('WARNING', 'WidgetConverters', 'Unmatched social icon platform name', [
+                    'component_type' => $component_type,
+                    'name' => $child['name'] ?? '',
+                    'node_id' => $child['id'] ?? '',
+                ]);
+            }
+
+            $items[] = [
+                'social_icon' => $icon,
+                'link' => [
+                    'url' => '#',
+                    'is_external' => true,
+                    'nofollow' => false,
+                ],
+            ];
+        }
+
+        if ($icon_like_count < 2 || empty($items)) {
+            return null;
+        }
+
+        $settings = new \stdClass();
+        $settings->social_icon_list = $items;
+
+        return [
+            'id' => ($this->id_generator)(),
+            'elType' => 'widget',
+            'widgetType' => 'social-icons',
+            'isInner' => false,
+            'settings' => $settings,
+            'elements' => [],
+        ];
+    }
 }
