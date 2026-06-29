@@ -1,0 +1,99 @@
+---
+name: 🐛 Bug report
+description: Report something that isn't working
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: Which version of Figma to Elementor are you running?
+      placeholder: e.g. 1.3.3
+    validations:
+      required: true
+
+  - type: input
+    id: elementor_version
+    attributes:
+      label: Elementor version
+      description: Which version of Elementor (Free/Pro) are you running?
+      placeholder: e.g. 3.25.0
+    validations:
+      required: true
+
+  - type: input
+    id: wp_version
+    attributes:
+      label: WordPress version
+      description: Which version of WordPress?
+      placeholder: e.g. 6.7
+    validations:
+      required: true
+
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP version
+      description: Which PHP version?
+      placeholder: e.g. 8.1
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where does the issue occur?
+      options:
+        - Local development
+        - Production / live site
+        - Staging
+        - CI/CD
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the bug
+      description: What happened? What did you expect to happen?
+      placeholder: Tell us what you see
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error logs
+      description: Paste any relevant error logs from `debug.log` or the browser console.
+      render: shell
+
+  - type: textarea
+    id: figma_file
+    attributes:
+      label: Figma file link (optional)
+      description: Link to the Figma file being imported (if applicable).
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true

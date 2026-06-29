@@ -1,0 +1,53 @@
+---
+name: ✨ Feature request
+description: Suggest an idea for this plugin
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an idea!
+
+  - type: input
+    id: figma_feature
+    attributes:
+      label: Related Figma feature
+      description: Is this related to a specific Figma feature (auto layout, variables, components, etc.)?
+      placeholder: e.g. Figma variables, component properties, etc.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of what the problem is.
+      placeholder: I'm frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What alternative solutions or workarounds have you considered?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add screenshots, mockups, or code snippets to help explain your idea.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true

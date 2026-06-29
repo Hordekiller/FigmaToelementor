@@ -1,0 +1,23 @@
+---
+name: ❓ Question / Support
+description: Ask a question about using the plugin
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before asking, please check the [README](https://github.com/Hordekiller/FigmaToelementor/blob/main/README.md) and [Discussions](https://github.com/Hordekiller/FigmaToelementor/discussions).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to achieve?
