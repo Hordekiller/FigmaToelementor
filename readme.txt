@@ -4,7 +4,7 @@ Tags: figma, elementor, hello-elementor, figma to elementor, template converter,
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.3.1
+Stable tag: 1.3.3
 Copyright: 2026 Hordekiller
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -84,6 +84,24 @@ Yes. All imported templates are fully editable in Elementor — every widget, st
 Yes. Full RTL support with Persian translation included.
 
 == Changelog ==
+
+= 1.3.3 =
+* Fix: Front-end fatal — is_plugin_active() guard added for non-admin page loads
+* Fix: Linear gradient detection — GRADIENT_LINEAR case added (was silently dropped)
+* Fix: Security — esc_url() on image src, add_link_attributes() for custom link
+* Fix: Security — SSRF host allowlist + image-only MIME restriction on downloads
+* Fix: Security — current_user_can('manage_options') added to admin handlers
+* Fix: Security — .htaccess deny-all added to log directory
+* Fix: to_object list repeater corruption — sequential arrays preserved as arrays
+* Fix: BOOLEAN_OPERATION/STAR/POLYGON mapped to icon (not image) — SVG export
+* Fix: Per-side stroke weight — reads flat strokeTopWeight/strokeLeftWeight etc.
+* Fix: Partial padding — individual sides applied, missing sides default to 0
+* Fix: Social icons 'x' matcher — word-boundary regex instead of bare str_contains
+* Fix: Stat parser — EU ambiguous formats return null, negative signs handled
+* Fix: Dead ternary in extract_button_settings — split into proper fallback logic
+* Fix: PHPCS line length warnings resolved
+* Fix: PHPStan nullCoalesce.offset in image-handler.php resolved
+* Tests: 29 new regression tests for above fixes (PHPStan 0 errors, 126/126 green)
 
 = 1.3.1 =
 * New: Elementor_Renderer refactored into 7 single-responsibility classes (NodeFilter, TypeResolver, StyleExtractor, LayoutExtractor, WidgetConverters, Positioning, JsonNormalizer)

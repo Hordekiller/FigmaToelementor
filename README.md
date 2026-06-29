@@ -111,7 +111,7 @@ Activate from **Plugins**.
 
 ## Project Status
 
-### ✅ Done (v1.3.1)
+### ✅ Done (v1.3.3)
 
 | Module | What was delivered |
 |---|---|

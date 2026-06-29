@@ -161,10 +161,11 @@ class StyleExtractor
         } elseif (is_array($stroke_weight)) {
             // Figma sends per-side weight as individual fields on the node,
             // not as a nested object. This branch handles the (rare) nested form.
-            $top = max(1, (int) ($stroke_weight['strokeTopWeight'] ?? $stroke_weight['top'] ?? $stroke_weight['all'] ?? $node['strokeTopWeight'] ?? 1));
-            $right = max(1, (int) ($stroke_weight['strokeRightWeight'] ?? $stroke_weight['right'] ?? $stroke_weight['all'] ?? $node['strokeRightWeight'] ?? $top));
-            $bottom = max(1, (int) ($stroke_weight['strokeBottomWeight'] ?? $stroke_weight['bottom'] ?? $stroke_weight['all'] ?? $node['strokeBottomWeight'] ?? $top));
-            $left = max(1, (int) ($stroke_weight['strokeLeftWeight'] ?? $stroke_weight['left'] ?? $stroke_weight['all'] ?? $node['strokeLeftWeight'] ?? $right));
+            $sw = $stroke_weight;
+            $top = max(1, (int) ($sw['strokeTopWeight'] ?? $sw['top'] ?? $sw['all'] ?? $node['strokeTopWeight'] ?? 1));
+            $right = max(1, (int) ($sw['strokeRightWeight'] ?? $sw['right'] ?? $sw['all'] ?? $node['strokeRightWeight'] ?? $top));
+            $bottom = max(1, (int) ($sw['strokeBottomWeight'] ?? $sw['bottom'] ?? $sw['all'] ?? $node['strokeBottomWeight'] ?? $top));
+            $left = max(1, (int) ($sw['strokeLeftWeight'] ?? $sw['left'] ?? $sw['all'] ?? $node['strokeLeftWeight'] ?? $right));
             $is_linked = ($top === $right && $right === $bottom && $bottom === $left);
         } elseif (isset($node['strokeTopWeight']) || isset($node['strokeRightWeight'])) {
             $top = max(1, (int) ($node['strokeTopWeight'] ?? $node['strokeWeight'] ?? $w));

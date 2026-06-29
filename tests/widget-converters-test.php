@@ -115,7 +115,8 @@ $social_no_x = $conv->try_build_social_icons([
         ['id' => 's2', 'name' => 'Next', 'type' => 'VECTOR'],
     ],
 ], 'social');
-t('Box → not matched as twitter', $social_no_x === null || ($social_no_x['settings']->social_icon_list[0]['social_icon']['value'] ?? '') !== 'fab fa-x-twitter', $passed, $total);
+$got = $social_no_x['settings']->social_icon_list[0]['social_icon']['value'] ?? '';
+t('Box → not matched as twitter', $social_no_x === null || $got !== 'fab fa-x-twitter', $passed, $total);
 // Actual exact name 'x' should match twitter
 $social_exact_x = $conv->try_build_social_icons([
     'name' => 'Social',
@@ -124,7 +125,8 @@ $social_exact_x = $conv->try_build_social_icons([
         ['id' => 's2', 'name' => 'Instagram', 'type' => 'VECTOR'],
     ],
 ], 'social');
-t('exact "X" → matches twitter', $social_exact_x !== null && ($social_exact_x['settings']->social_icon_list[0]['social_icon']['value'] ?? '') === 'fab fa-x-twitter', $passed, $total);
+$got = $social_exact_x['settings']->social_icon_list[0]['social_icon']['value'] ?? '';
+t('exact "X" → matches twitter', $social_exact_x !== null && $got === 'fab fa-x-twitter', $passed, $total);
 // 'x' as standalone word in name
 $social_x_word = $conv->try_build_social_icons([
     'name' => 'Social',
@@ -133,7 +135,8 @@ $social_x_word = $conv->try_build_social_icons([
         ['id' => 's2', 'name' => 'twitter', 'type' => 'VECTOR'],
     ],
 ], 'social');
-t('word "x icon" → matches twitter', $social_x_word !== null && ($social_x_word['settings']->social_icon_list[0]['social_icon']['value'] ?? '') === 'fab fa-x-twitter', $passed, $total);
+$got = $social_x_word['settings']->social_icon_list[0]['social_icon']['value'] ?? '';
+t('word "x icon" → matches twitter', $social_x_word !== null && $got === 'fab fa-x-twitter', $passed, $total);
 
 echo "--- LayoutExtractor partial padding (regression) ---\n";
 $layout_extractor = new \HelloFigma\LayoutExtractor(new \HelloFigma\Positioning());

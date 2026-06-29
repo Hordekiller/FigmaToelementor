@@ -208,7 +208,9 @@ class WidgetConverters
             $search = $neg_m[1];
         }
 
-        if (!preg_match('/(?:^|\\s)([$€£])?\\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]+)?|[0-9]+(?:\\.[0-9]+)?)([kKmMbB%]?)(?=(?:\\s|$|[^A-Za-z0-9]))/', $search, $matches)) {
+        $num_pat = '/(?:^|\\s)([$€£])?\\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]+)?'
+            . '|[0-9]+(?:\\.[0-9]+)?)([kKmMbB%]?)(?=(?:\\s|$|[^A-Za-z0-9]))/';
+        if (!preg_match($num_pat, $search, $matches)) {
             return null;
         }
 

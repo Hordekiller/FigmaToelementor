@@ -64,7 +64,15 @@ t('CENTER is dir-agnostic (RTL-safe)', $pos->map_align('CENTER') === 'center', $
 
 echo "--- extract_background (gradient types) ---\n";
 $s_grad_linear = new \stdClass();
-$style->extract_background(['id' => 'n1', 'fills' => [['type' => 'GRADIENT_LINEAR', 'visible' => true, 'opacity' => 1, 'gradientStops' => [['position' => 0, 'color' => ['r' => 1, 'g' => 0, 'b' => 0, 'a' => 1]], ['position' => 1, 'color' => ['r' => 0, 'g' => 0, 'b' => 1, 'a' => 1]]], 'gradientHandlePositions' => [['x' => 0, 'y' => 1], ['x' => 1, 'y' => 0]]]], 'name' => 'GradBox'], $s_grad_linear);
+$fill_linear = [
+    'type' => 'GRADIENT_LINEAR', 'visible' => true, 'opacity' => 1,
+    'gradientStops' => [
+        ['position' => 0, 'color' => ['r' => 1, 'g' => 0, 'b' => 0, 'a' => 1]],
+        ['position' => 1, 'color' => ['r' => 0, 'g' => 0, 'b' => 1, 'a' => 1]],
+    ],
+    'gradientHandlePositions' => [['x' => 0, 'y' => 1], ['x' => 1, 'y' => 0]],
+];
+$style->extract_background(['id' => 'n1', 'fills' => [$fill_linear], 'name' => 'GradBox'], $s_grad_linear);
 t('GRADIENT_LINEAR → background=gradient', ($s_grad_linear->background_background ?? '') === 'gradient', $passed, $total);
 t('GRADIENT_LINEAR → gradient_type=linear', ($s_grad_linear->background_gradient_type ?? '') === 'linear', $passed, $total);
 t('GRADIENT_LINEAR → color stop 0 set', isset($s_grad_linear->background_gradient_color_0), $passed, $total);
@@ -76,14 +84,26 @@ t('EMOJI unknown type → no background set', !isset($s_default->background_back
 echo "--- extract_border (per-side stroke weight) ---\n";
 // Figma per-side fields on node directly
 $s_stroke = new \stdClass();
-$style->extract_border(['id' => 'n3', 'strokes' => [['visible' => true, 'color' => ['r' => 1, 'g' => 0, 'b' => 0, 'a' => 1]]], 'strokeWeight' => null, 'strokeTopWeight' => 5, 'strokeRightWeight' => 3, 'strokeBottomWeight' => 5, 'strokeLeftWeight' => 3], $s_stroke);
+$stroke_node = [
+    'id' => 'n3',
+    'strokes' => [['visible' => true, 'color' => ['r' => 1, 'g' => 0, 'b' => 0, 'a' => 1]]],
+    'strokeWeight' => null,
+    'strokeTopWeight' => 5,
+    'strokeRightWeight' => 3,
+    'strokeBottomWeight' => 5,
+    'strokeLeftWeight' => 3,
+];
+$style->extract_border($stroke_node, $s_stroke);
 t('per-side stroke top=5', (($s_stroke->border_width ?? null)?->top ?? 0) === 5, $passed, $total);
 t('per-side stroke right=3', (($s_stroke->border_width ?? null)?->right ?? 0) === 3, $passed, $total);
 t('per-side stroke not linked', (($s_stroke->border_width ?? null)?->isLinked ?? true) === false, $passed, $total);
 
 // Numeric strokeWeight fallback
 $s_stroke2 = new \stdClass();
-$style->extract_border(['id' => 'n4', 'strokes' => [['visible' => true, 'color' => ['r' => 0, 'g' => 0, 'b' => 0, 'a' => 1]]], 'strokeWeight' => 2], $s_stroke2);
+$border_node2 = ['id' => 'n4', 'strokeWeight' => 2,
+    'strokes' => [['visible' => true, 'color' => ['r' => 0, 'g' => 0, 'b' => 0, 'a' => 1]]],
+];
+$style->extract_border($border_node2, $s_stroke2);
 t('numeric strokeWeight=2', (($s_stroke2->border_width ?? null)?->top ?? 0) === 2, $passed, $total);
 t('numeric strokeWeight isLinked', (($s_stroke2->border_width ?? null)?->isLinked ?? false) === true, $passed, $total);
 

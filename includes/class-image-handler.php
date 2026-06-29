@@ -307,6 +307,7 @@ class Image_Handler
         }
         if (!$allowed) {
             Logger::log('WARNING', 'ImageHandler', 'Blocked download from untrusted host', ['host' => $host, 'url' => $url]);
+            /* translators: %s: hostname of blocked URL */
             return new \WP_Error('figma_ssrf_blocked', sprintf(__('Download from %s is not allowed.', 'hello-figma'), $host));
         }
 
@@ -321,7 +322,7 @@ class Image_Handler
 
         // Only allow image MIME types — block SVG, XML, etc.
         $mime_type = wp_check_filetype($file_name);
-        if (!in_array($mime_type['type'] ?? '', ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'], true)) {
+        if (!in_array($mime_type['type'], ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'], true)) {
             @unlink($temp_file);
             return new \WP_Error('figma_invalid_mime', __('Downloaded file is not a supported image type.', 'hello-figma'));
         }

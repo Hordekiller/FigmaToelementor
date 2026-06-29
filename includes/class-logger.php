@@ -40,7 +40,10 @@ class Logger
 
             $htaccess = self::$log_dir . '/.htaccess';
             if (!file_exists($htaccess)) {
-                @file_put_contents($htaccess, "# Deny all direct access\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\n");
+                $content = "# Deny all direct access\n"
+                    . "<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n"
+                    . "<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\n";
+                @file_put_contents($htaccess, $content);
             }
 
             $date = current_time('Y-m-d');
