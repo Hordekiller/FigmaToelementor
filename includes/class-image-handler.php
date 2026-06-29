@@ -285,6 +285,31 @@ class Image_Handler
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
 
+        // Validate URL: only https and known Figma/S3 domains.
+        $allowed_hosts = [
+            'figma.com',
+            'figma-beta.com',
+            's3.amazonaws.com',
+            's3.us-west-2.amazonaws.com',
+            's3.us-east-1.amazonaws.com',
+        ];
+        $parsed = wp_parse_url($url);
+        $host = $parsed['host'] ?? '';
+        if (empty($host) || wp_parse_url($url, PHP_URL_SCHEME) !== 'https') {
+            return new \WP_Error('figma_ssrf_blocked', __('Image URL must be HTTPS.', 'hello-figma'));
+        }
+        $allowed = false;
+        foreach ($allowed_hosts as $ah) {
+            if ($host === $ah || str_ends_with($host, '.' . $ah)) {
+                $allowed = true;
+                break;
+            }
+        }
+        if (!$allowed) {
+            Logger::log('WARNING', 'ImageHandler', 'Blocked download from untrusted host', ['host' => $host, 'url' => $url]);
+            return new \WP_Error('figma_ssrf_blocked', sprintf(__('Download from %s is not allowed.', 'hello-figma'), $host));
+        }
+
         $temp_file = download_url($url);
         if (is_wp_error($temp_file)) {
             return $temp_file;
@@ -293,6 +318,13 @@ class Image_Handler
         $file_name = !empty($name)
             ? sanitize_file_name($name) . '.' . pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION)
             : basename(parse_url($url, PHP_URL_PATH));
+
+        // Only allow image MIME types — block SVG, XML, etc.
+        $mime_type = wp_check_filetype($file_name);
+        if (!in_array($mime_type['type'] ?? '', ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'], true)) {
+            @unlink($temp_file);
+            return new \WP_Error('figma_invalid_mime', __('Downloaded file is not a supported image type.', 'hello-figma'));
+        }
 
         $file_array = [
             'name' => $file_name,

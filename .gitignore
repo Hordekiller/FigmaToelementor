@@ -25,6 +25,7 @@ Thumbs.db
 *.cache
 vendor/
 composer.lock
+composer.json
 
 # Node
 node_modules/

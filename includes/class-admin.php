@@ -126,6 +126,10 @@ class Admin
 
     public function handle_form_submissions(): void
     {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
         // Handle clear cache
         if (isset($_POST['hello_figma_clear_cache'])) {
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce

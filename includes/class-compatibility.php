@@ -87,6 +87,13 @@ class Compatibility
 
     private function check_dependencies(): void
     {
+        // is_plugin_active() lives in wp-admin/includes/plugin.php, which is NOT
+        // loaded on front-end requests. check() runs on the front-end-reachable
+        // `init` hook, so we must load it ourselves or this fatals on every page.
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         foreach (self::REQUIRED_PLUGINS as $slug => $name) {
             if (!is_plugin_active("{$slug}/{$slug}.php")) {
                 $this->errors[] = sprintf(

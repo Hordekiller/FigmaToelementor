@@ -179,7 +179,7 @@ class Figma_Image extends \Elementor\Widget_Base
         }
 
         $this->add_render_attribute('wrapper', 'class', 'figma-image');
-        $this->add_render_attribute('image', 'src', $settings['image']['url']);
+        $this->add_render_attribute('image', 'src', esc_url($settings['image']['url']));
         $this->add_render_attribute('image', 'alt', $settings['caption'] ?? '');
 
         if (!empty($settings['image']['id'])) {
@@ -193,10 +193,7 @@ class Figma_Image extends \Elementor\Widget_Base
             $link_open = '<a href="' . esc_url($settings['image']['url']) . '">';
             $link_close = '</a>';
         } elseif ($settings['link_to'] === 'custom' && !empty($settings['link']['url'])) {
-            $this->add_render_attribute('custom_link', 'href', $settings['link']['url']);
-            if ($settings['link']['is_external'] ?? false) {
-                $this->add_render_attribute('custom_link', 'target', '_blank');
-            }
+            $this->add_link_attributes('custom_link', $settings['link']);
             $link_open = '<a ' . $this->get_render_attribute_string('custom_link') . '>';
             $link_close = '</a>';
         }

@@ -215,28 +215,27 @@ class JsonNormalizer
     /**
      * Recursively convert a mixed value to a JSON-safe object,
      * preserving numeric-indexed arrays as arrays.
+     *
+     * @param mixed $value
+     * @return \stdClass|array<mixed>
      */
-    private static function to_object($value): \stdClass
+    private static function to_object($value): \stdClass|array
     {
         if ($value instanceof \stdClass) {
             return $value;
         }
 
         if (is_array($value)) {
-            // Check if this is a sequential (numeric) array → keep as array
-            // by wrapping it in an object property. But for settings, even
-            // sequential arrays are valid (e.g., carousel slides).
-            // We convert associative arrays to objects recursively.
-            $is_list = array_is_list($value);
-            if ($is_list) {
-                // Convert list items recursively if they are arrays
-                $result = new \stdClass();
+            // Sequential (numeric) arrays → keep as array, recurse items.
+            // Elementor repeater fields (social_icon_list, gallery, etc.)
+            // MUST remain arrays — converting them to stdClass with numeric
+            // keys corrupts the data structure.
+            if (array_is_list($value)) {
+                $result = [];
                 foreach ($value as $k => $v) {
-                    if (is_array($v) || $v instanceof \stdClass) {
-                        $result->$k = self::to_object($v);
-                    } else {
-                        $result->$k = $v;
-                    }
+                    $result[$k] = is_array($v) || $v instanceof \stdClass
+                        ? self::to_object($v)
+                        : $v;
                 }
                 return $result;
             }

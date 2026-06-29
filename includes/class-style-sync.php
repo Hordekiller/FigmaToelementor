@@ -223,6 +223,10 @@ class Style_Sync
             return;
         }
 
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Insufficient permissions.', 'hello-figma'));
+        }
+
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce validated by wp_verify_nonce
         if (!wp_verify_nonce(wp_unslash($_POST['_figma_sync_nonce'] ?? ''), 'hello_figma_sync_styles')) {
             wp_die(__('Security check failed.', 'hello-figma'));

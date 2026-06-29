@@ -188,19 +188,44 @@ class WidgetConverters
 
     public function parse_stat_value(string $text): ?string
     {
-        if (!preg_match('/(?:^|\\s)([$€£])?\\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]+)?|[0-9]+(?:\\.[0-9]+)?)([kKmMbB%]?)(?:\\b|$)/', $text, $matches)) {
+        $trimmed = trim($text);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        // Detect ambiguous EU format: multiple dot-grouped triplets (12.345.678)
+        // or a trailing comma-decimal (1.234,56) — return null rather than
+        // producing silently wrong values.
+        if (preg_match('/\b\d{1,3}\.\d{3}\.\d/', $trimmed) || preg_match('/[.,]\d{2}(?:\s|$)/', $trimmed)) {
+            return null;
+        }
+
+        // Strip leading negative sign (hyphen or unicode minus).
+        $negative = 1;
+        $search = $trimmed;
+        if (preg_match('/^(?:−|-)\s*(.+)$/', $trimmed, $neg_m)) {
+            $negative = -1;
+            $search = $neg_m[1];
+        }
+
+        if (!preg_match('/(?:^|\\s)([$€£])?\\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]+)?|[0-9]+(?:\\.[0-9]+)?)([kKmMbB%]?)(?=(?:\\s|$|[^A-Za-z0-9]))/', $search, $matches)) {
             return null;
         }
 
         $number = str_replace(',', '', $matches[2]);
-        $suffix = $matches[3] ?? '';
+        $suffix = $matches[3];
+
         if ($suffix === '') {
-            return $number;
+            return (string) ((float) $number * $negative);
         }
 
-        return $number . $suffix;
+        return ($negative < 0 ? '-' : '') . $number . $suffix;
     }
 
+    /**
+     * @param array<string, mixed> $node
+     * @return array<string, mixed>|null
+     */
     public function try_build_stats(array $node): ?array
     {
         $children = $node['children'] ?? [];
@@ -244,6 +269,11 @@ class WidgetConverters
         ];
     }
 
+    /**
+     * @param array<string, mixed> $node
+     * @param string $component_type
+     * @return array<string, mixed>|null
+     */
     public function try_build_social_icons(array $node, string $component_type): ?array
     {
         $children = $node['children'] ?? [];
@@ -283,12 +313,12 @@ class WidgetConverters
             $icon = ['value' => 'fab fa-link', 'library' => 'fa-solid'];
             $matched = false;
             foreach ($platform_map as $needle => $mapped_icon) {
-                if ($needle === 'twitter' && (str_contains($name, 'x') || str_contains($name, 'twitter'))) {
-                    $icon = $mapped_icon;
-                    $matched = true;
-                    break;
-                }
-                if ($needle !== 'twitter' && str_contains($name, $needle)) {
+                $matches = match (true) {
+                    $needle === 'x' => $name === 'x' || preg_match('/\bx\b/i', $name),
+                    $needle === 'twitter' => str_contains($name, 'twitter'),
+                    default => str_contains($name, $needle),
+                };
+                if ($matches) {
                     $icon = $mapped_icon;
                     $matched = true;
                     break;

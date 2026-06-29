@@ -123,10 +123,10 @@ Activate from **Plugins**.
 | **Logger resilience** | `error_log()` fallback for ERROR/CRITICAL. `hello_figma_logged` action hook. Dashboard "Recent Activity Log" panel. |
 | **Positioning warnings** | Rotated nodes in absolute-position context logged as WARNING with node_id, name, rotation value. |
 | **JSON contract stabilization** | `JsonNormalizer::normalize_template()` + `validate_template()` called before every `save_template`. Template-level critical errors produce `WP_Error`; element-level warnings are logged. |
-| **Snapshot testing** | 6 golden scenarios (53 elements, 18 top-level). CLI runner at `tests/snapshot-test.php` with update mode (`--update`). |
-| **Unit tests** | 83 tests, 0 failures across 5 suites: helpers (26), type resolver (24), widget converters (11), normalizer (16), snapshot (6). All standalone PHP CLI (no PHPUnit dependency). |
-| **PHPStan Level 6** | 0 errors; only baseline entries are `missingType.iterableValue` (118 entries). |
-| **Gradient detection** | Linear/radial/angular/diamond all detected. Unsupported types (angular, diamond) mapped to linear fallback. |
+| **Snapshot testing** | 10 golden scenarios. CLI runner at `tests/snapshot-test.php` with update mode (`--update`). **Note:** golden files are self-generated on first run — snapshots prove stability, not correctness. |
+| **Unit tests** | 97 tests, 0 failures across 5 suites: helpers (26 → 40), type resolver (24), widget converters (21), normalizer (16), snapshot (10). All standalone PHP CLI (no PHPUnit dependency). |
+| **PHPStan Level 6** | 0 errors (after suppression via baseline — `missingType.iterableValue` entries remain in baseline). |
+| **Gradient detection** | Linear (`GRADIENT_LINEAR`), radial, angular, diamond all detected. Unsupported types mapped to linear fallback; unknown paint types logged as WARNING. |
 | **RTL correctness** | `map_align()` outputs `flex-start`/`flex-end` — CSS logical properties respect `dir` attribute automatically. 3 dedicated test cases. |
 
 ### ⏳ Incomplete / Needs Work
@@ -201,11 +201,11 @@ FigmaToelementor/
 │   ├── hello-figma-en_US.po
 │   └── ...
 ├── tests/                        # CLI test suites (no PHPUnit)
-│   ├── helpers-test.php          # 26 tests
+│   ├── helpers-test.php          # 40 tests
 │   ├── type-resolver-test.php    # 24 tests
-│   ├── widget-converters-test.php # 11 tests
-│   ├── json-normalizer-test.php  # 16 tests
-│   ├── snapshot-test.php         # 6 golden scenarios
+│   ├── widget-converters-test.php # 21 tests
+│   ├── json-normalizer-test.php  # 21 tests
+│   ├── snapshot-test.php         # 10 golden scenarios
 │   ├── mock-figma-api.php        # MockFigmaAPI for snapshot tests
 │   ├── wordpress-stubs.php       # Minimal WP function stubs
 │   └── run-all.sh                # Runner (exit 1 on any failure)
@@ -257,7 +257,7 @@ Each extractor class is stateless — it receives a `stdClass $settings` and ret
 All tests run as standalone PHP CLI files (no PHPUnit, no Composer dependency):
 
 ```bash
-# Run all 5 suites (83 tests)
+# Run all 5 suites (97 tests)
 bash tests/run-all.sh
 
 # Run a specific suite
@@ -272,6 +272,8 @@ php tests/snapshot-test.php --update # overwrite golden files
 ```
 
 Snapshot golden files live at `project_audit/snapshots/golden/` (gitignored — generated locally). Scenarios define mock Figma nodes in `project_audit/snapshots/scenarios/`.
+
+**Note:** Snapshot tests validate *stability* (output hasn't changed since golden was recorded), not *correctness* — golden files are self-generated on first run from the very code under test. Always pair snapshot verification with unit tests that assert specific values.
 
 ---
 

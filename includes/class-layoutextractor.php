@@ -28,14 +28,15 @@ class LayoutExtractor
         $pT = $node['paddingTop'] ?? $node['padding'] ?? null;
         $pB = $node['paddingBottom'] ?? $node['padding'] ?? null;
 
-        if ($pT !== null && $pR !== null && $pB !== null && $pL !== null) {
-            $settings->padding = (object) [
-                'unit' => 'px',
-                'top' => (int) $pT, 'right' => (int) $pR,
-                'bottom' => (int) $pB, 'left' => (int) $pL,
-                'isLinked' => ($pT === $pR && $pR === $pB && $pB === $pL),
-            ];
-        }
+        // Apply padding even if only some sides are set — Figma often returns partial.
+        $settings->padding = (object) [
+            'unit' => 'px',
+            'top' => (int) ($pT ?? $pL ?? $pR ?? $pB ?? 0),
+            'right' => (int) ($pR ?? $pT ?? $pB ?? $pL ?? 0),
+            'bottom' => (int) ($pB ?? $pT ?? $pR ?? $pL ?? 0),
+            'left' => (int) ($pL ?? $pT ?? $pR ?? $pB ?? 0),
+            'isLinked' => ($pT !== null && $pR !== null && $pB !== null && $pL !== null && $pT === $pR && $pR === $pB && $pB === $pL),
+        ];
 
         $gap = $node['itemSpacing'] ?? null;
         if ($gap !== null) {

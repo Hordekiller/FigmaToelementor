@@ -313,12 +313,6 @@ parameters:
 			path: includes/class-jsonnormalizer.php
 
 		-
-			message: '#^Method HelloFigma\\JsonNormalizer\:\:to_object\(\) has parameter \$value with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: includes/class-jsonnormalizer.php
-
-		-
 			message: '#^Method HelloFigma\\JsonNormalizer\:\:validate_element\(\) has parameter \$element with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

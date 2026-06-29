@@ -39,10 +39,14 @@ class TypeResolver
             if ($fill !== null && ($fill['type'] ?? '') === 'IMAGE') {
                 return ['widget', 'image'];
             }
-        }
-
-        if (in_array($figma_type, ['BOOLEAN_OPERATION', 'STAR', 'POLYGON'], true)) {
-            return ['widget', 'image'];
+            // Not an image fill — check if this is an icon-like shape (small, simple).
+            // BOOLEAN_OPERATION/STAR/POLYGON with solid fill → icon widget.
+            if (in_array($figma_type, ['BOOLEAN_OPERATION', 'STAR', 'POLYGON'], true)) {
+                if ($fill !== null && ($fill['type'] ?? '') === 'SOLID') {
+                    return ['widget', 'icon'];
+                }
+                return ['widget', 'icon'];
+            }
         }
 
         return self::NODE_MAP[$figma_type] ?? ['container', null];

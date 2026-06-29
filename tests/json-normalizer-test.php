@@ -83,4 +83,26 @@ t('isInner filled', is_bool($n4['content'][0]['isInner']), $passed, $total);
 // widgetType not filled on non-widget (correct behavior — only validated for widgets)
 t('widgetType absent on container', !isset($n4['content'][0]['widgetType']), $passed, $total);
 
+echo "--- List repeater (to_object) ---\n";
+$list_repeater = JsonNormalizer::normalize_template([
+    'title' => 'T','type' => 'page','version' => '0.4',
+    'content' => [[
+        'id' => 'x','elType' => 'widget','widgetType' => 'social-icons',
+        'settings' => [
+            'social_icon_list' => [
+                ['social_icon' => ['value' => 'fab fa-instagram', 'library' => 'fa-brands'], 'link' => ['url' => '#']],
+                ['social_icon' => ['value' => 'fab fa-facebook', 'library' => 'fa-brands'], 'link' => ['url' => '#']],
+            ],
+        ],
+        'elements' => [], 'isInner' => false,
+    ]],
+    'page_settings' => []
+]);
+$social_list = $list_repeater['content'][0]['settings']->social_icon_list ?? null;
+t('repeater list is array', is_array($social_list), $passed, $total);
+t('repeater list has 2 items', is_array($social_list) && count($social_list) === 2, $passed, $total);
+t('repeater item 0 is stdClass', is_array($social_list) && $social_list[0] instanceof \stdClass, $passed, $total);
+t('repeater item 0 social_icon preserved', is_array($social_list) && ($social_list[0]->social_icon->value ?? '') === 'fab fa-instagram', $passed, $total);
+t('not an object with numeric keys', !($social_list instanceof \stdClass), $passed, $total);
+
 echo "\n--- RESULTS: $passed/$total ---\n";

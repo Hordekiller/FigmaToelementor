@@ -3,6 +3,8 @@
 define('ABSPATH', '/tmp');
 require '/home/solo/development/Figma/includes/class-logger.php';
 require '/home/solo/development/Figma/includes/class-styleextractor.php';
+require '/home/solo/development/Figma/includes/class-positioning.php';
+require '/home/solo/development/Figma/includes/class-layoutextractor.php';
 require '/home/solo/development/Figma/includes/class-widgetconverters.php';
 
 use HelloFigma\StyleExtractor;
@@ -91,5 +93,54 @@ t('98% → 98%', $conv->parse_stat_value('98%') === '98%', $passed, $total);
 t('1,200 → 1200', $conv->parse_stat_value('1,200') === '1200', $passed, $total);
 t('plain 42 → 42', $conv->parse_stat_value('plain 42') === '42', $passed, $total);
 t('non-numeric → null', $conv->parse_stat_value('hello world') === null, $passed, $total);
+
+echo "--- Stats parsing — regression edge cases ---\n";
+// EU format: dotted thousands should return null (ambiguous)
+t('EU 12.345.678 → null (ambiguous)', $conv->parse_stat_value('12.345.678') === null, $passed, $total);
+// Negative numbers
+t('-5 → -5', $conv->parse_stat_value('-5') === '-5', $passed, $total);
+t('−42 → -42 (unicode minus)', $conv->parse_stat_value('−42') === '-42', $passed, $total);
+// Suffix on word boundary
+t('98% off → 98% (% followed by space)', $conv->parse_stat_value('98% off') === '98%', $passed, $total);
+t('100k followers → 100k', $conv->parse_stat_value('100k followers') === '100k', $passed, $total);
+// Empty string
+t('empty string → null', $conv->parse_stat_value('') === null, $passed, $total);
+
+echo "--- Social icons — platform matcher edge cases ---\n";
+// 'x' matcher should NOT match "Box" or "Next"
+$social_no_x = $conv->try_build_social_icons([
+    'name' => 'Social',
+    'children' => [
+        ['id' => 's1', 'name' => 'Box', 'type' => 'VECTOR'],
+        ['id' => 's2', 'name' => 'Next', 'type' => 'VECTOR'],
+    ],
+], 'social');
+t('Box → not matched as twitter', $social_no_x === null || ($social_no_x['settings']->social_icon_list[0]['social_icon']['value'] ?? '') !== 'fab fa-x-twitter', $passed, $total);
+// Actual exact name 'x' should match twitter
+$social_exact_x = $conv->try_build_social_icons([
+    'name' => 'Social',
+    'children' => [
+        ['id' => 's1', 'name' => 'X', 'type' => 'VECTOR'],
+        ['id' => 's2', 'name' => 'Instagram', 'type' => 'VECTOR'],
+    ],
+], 'social');
+t('exact "X" → matches twitter', $social_exact_x !== null && ($social_exact_x['settings']->social_icon_list[0]['social_icon']['value'] ?? '') === 'fab fa-x-twitter', $passed, $total);
+// 'x' as standalone word in name
+$social_x_word = $conv->try_build_social_icons([
+    'name' => 'Social',
+    'children' => [
+        ['id' => 's1', 'name' => 'x icon', 'type' => 'VECTOR'],
+        ['id' => 's2', 'name' => 'twitter', 'type' => 'VECTOR'],
+    ],
+], 'social');
+t('word "x icon" → matches twitter', $social_x_word !== null && ($social_x_word['settings']->social_icon_list[0]['social_icon']['value'] ?? '') === 'fab fa-x-twitter', $passed, $total);
+
+echo "--- LayoutExtractor partial padding (regression) ---\n";
+$layout_extractor = new \HelloFigma\LayoutExtractor(new \HelloFigma\Positioning());
+$s_partial = new \stdClass();
+$layout_extractor->extract_container_layout(['id' => 'n', 'paddingTop' => 20, 'paddingBottom' => 10], $s_partial);
+t('partial pad top=20', ($s_partial->padding->top ?? 0) === 20, $passed, $total);
+t('partial pad bottom=10', ($s_partial->padding->bottom ?? 0) === 10, $passed, $total);
+t('partial pad right filled', ($s_partial->padding->right === 0 || $s_partial->padding->right === 20), $passed, $total);
 
 echo "\n--- RESULTS: $passed/$total ---\n";

@@ -57,6 +57,7 @@ if (!function_exists('add_menu_page')) { function add_menu_page(...$args): strin
 if (!function_exists('add_submenu_page')) { function add_submenu_page(...$args): string { return ''; } }
 if (!function_exists('current_time')) { function current_time(string $type): string { return ''; } }
 if (!function_exists('flush_rewrite_rules')) { function flush_rewrite_rules(): void {} }
+if (!function_exists('wp_parse_url')) { function wp_parse_url(...$args): array|int|string|false|null { return []; } }
 if (!function_exists('wp_remote_get')) {
     /**
      * @return array<string, mixed>|\WP_Error

@@ -38,6 +38,11 @@ class Logger
                 @file_put_contents($index, '<?php // Silence is golden.');
             }
 
+            $htaccess = self::$log_dir . '/.htaccess';
+            if (!file_exists($htaccess)) {
+                @file_put_contents($htaccess, "# Deny all direct access\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\n");
+            }
+
             $date = current_time('Y-m-d');
             $log_file = self::$log_dir . "/import-{$date}.log";
 

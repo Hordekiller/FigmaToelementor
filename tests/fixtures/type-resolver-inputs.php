@@ -44,17 +44,17 @@ return [
          'fills' => [['type' => 'IMAGE', 'imageRef' => 'img456', 'visible' => true]]],
         'widget', 'image',
     ],
-    'BOOLEAN_OPERATION → image' => [
+    'BOOLEAN_OPERATION → icon' => [
         ['type' => 'BOOLEAN_OPERATION', 'name' => 'Shape', 'fillOverride' => []],
-        'widget', 'image',
+        'widget', 'icon',
     ],
-    'STAR → image' => [
+    'STAR → icon' => [
         ['type' => 'STAR', 'name' => 'Star', 'fillOverride' => []],
-        'widget', 'image',
+        'widget', 'icon',
     ],
-    'POLYGON → image' => [
+    'POLYGON → icon' => [
         ['type' => 'POLYGON', 'name' => 'Triangle', 'fillOverride' => []],
-        'widget', 'image',
+        'widget', 'icon',
     ],
     'BOOLEAN with IMAGE fill → image (overrides default)' => [
         ['type' => 'BOOLEAN_OPERATION', 'name' => 'ImageShape',

@@ -70,7 +70,7 @@ class StyleExtractor
                 }
                 break;
 
-            case 'GRADIENT':
+            case 'GRADIENT_LINEAR':
             case 'GRADIENT_RADIAL':
             case 'GRADIENT_ANGULAR':
             case 'GRADIENT_DIAMOND':
@@ -113,6 +113,16 @@ class StyleExtractor
                     $settings->background_repeat = 'no-repeat';
                 }
                 break;
+
+            default:
+                // Unknown paint type (e.g. a future GRADIENT_* variant, EMOJI, VIDEO).
+                // Surface it instead of silently dropping the background.
+                Logger::log('WARNING', 'StyleExtractor', 'Unhandled fill type — background skipped', [
+                    'type' => $type,
+                    'node_id' => $node['id'] ?? '',
+                    'name' => $node['name'] ?? '',
+                ]);
+                break;
         }
     }
 
@@ -149,10 +159,18 @@ class StyleExtractor
             $w = max(1, (int) $stroke_weight);
             $top = $right = $bottom = $left = $w;
         } elseif (is_array($stroke_weight)) {
-            $top = max(1, (int) ($stroke_weight['top'] ?? $stroke_weight['all'] ?? 1));
-            $right = max(1, (int) ($stroke_weight['right'] ?? $stroke_weight['all'] ?? $top));
-            $bottom = max(1, (int) ($stroke_weight['bottom'] ?? $stroke_weight['all'] ?? $top));
-            $left = max(1, (int) ($stroke_weight['left'] ?? $stroke_weight['all'] ?? $right));
+            // Figma sends per-side weight as individual fields on the node,
+            // not as a nested object. This branch handles the (rare) nested form.
+            $top = max(1, (int) ($stroke_weight['strokeTopWeight'] ?? $stroke_weight['top'] ?? $stroke_weight['all'] ?? $node['strokeTopWeight'] ?? 1));
+            $right = max(1, (int) ($stroke_weight['strokeRightWeight'] ?? $stroke_weight['right'] ?? $stroke_weight['all'] ?? $node['strokeRightWeight'] ?? $top));
+            $bottom = max(1, (int) ($stroke_weight['strokeBottomWeight'] ?? $stroke_weight['bottom'] ?? $stroke_weight['all'] ?? $node['strokeBottomWeight'] ?? $top));
+            $left = max(1, (int) ($stroke_weight['strokeLeftWeight'] ?? $stroke_weight['left'] ?? $stroke_weight['all'] ?? $node['strokeLeftWeight'] ?? $right));
+            $is_linked = ($top === $right && $right === $bottom && $bottom === $left);
+        } elseif (isset($node['strokeTopWeight']) || isset($node['strokeRightWeight'])) {
+            $top = max(1, (int) ($node['strokeTopWeight'] ?? $node['strokeWeight'] ?? $w));
+            $right = max(1, (int) ($node['strokeRightWeight'] ?? $node['strokeWeight'] ?? $top));
+            $bottom = max(1, (int) ($node['strokeBottomWeight'] ?? $node['strokeWeight'] ?? $top));
+            $left = max(1, (int) ($node['strokeLeftWeight'] ?? $node['strokeWeight'] ?? $right));
             $is_linked = ($top === $right && $right === $bottom && $bottom === $left);
         }
 
@@ -314,9 +332,11 @@ class StyleExtractor
                 'ثبت', 'ارسال', 'buy', 'shop', 'خرید',
             ];
             $name_lower = mb_strtolower(trim($node['name'] ?? ''));
-            $settings->text = in_array($name_lower, $name_labels, true)
-                ? ($node['name'] ?? __('Button', 'hello-figma'))
-                : ($node['name'] ?? __('Button', 'hello-figma'));
+            if (in_array($name_lower, $name_labels, true)) {
+                $settings->text = __('Button', 'hello-figma');
+            } else {
+                $settings->text = $node['name'] ?? __('Button', 'hello-figma');
+            }
         }
 
         $settings->button_size = 'md';
