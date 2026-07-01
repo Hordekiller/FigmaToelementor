@@ -232,8 +232,10 @@
 
                 const autoLabel = 'تشخیص خودکار (' + (persianLabels[suggestion] || suggestion) + ')';
 
+                const autoType = (section.auto_suggestion && section.auto_suggestion.type) ? section.auto_suggestion.type : suggestion;
+
                 const card = $(
-                    '<div class="figma-section-card" data-section-id="' + section.id + '">' +
+                    '<div class="figma-section-card" data-section-id="' + section.id + '" data-auto-type="' + this.escAttr(autoType) + '">' +
                         '<div class="figma-section-preview">' +
                             (section.thumbnail_url
                                 ? '<img src="' + section.thumbnail_url + '" alt="" loading="lazy">'
@@ -269,9 +271,22 @@
 
         confirmImport() {
             const overrides = {};
+            const grid = $('#hello-figma-review-grid');
+
             $('#hello-figma-review-grid .figma-section-card').each(function () {
                 const sectionId = $(this).data('section-id');
                 const selected = $(this).find('.figma-section-type-select').val();
+
+                // If user keeps "auto" → apply server-provided auto_overrides
+                if (selected === 'auto') {
+                    const autoType = $(this).data('auto-type');
+                    if (autoType && autoType !== 'container') {
+                        // import expects overrides[sectionId] = selected string
+                        overrides[sectionId] = autoType;
+                    }
+                    return;
+                }
+
                 if (selected !== 'auto') {
                     overrides[sectionId] = selected;
                 }

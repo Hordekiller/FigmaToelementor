@@ -213,11 +213,28 @@ class Elementor_Renderer
             if ($child_id === '') {
                 continue;
             }
+
             $child_ids[] = $child_id;
+
+            $layer_name = (string) ($child['name'] ?? '');
+            $suggested_type = Component_Detector::detect($layer_name) ?? 'container';
+
+            $auto = $this->build_auto_mapping_suggestion($child, $suggested_type);
+
             $sections[] = [
                 'id' => $child_id,
                 'name' => $child['name'] ?? 'Untitled',
-                'suggested_type' => Component_Detector::detect($child['name'] ?? '') ?? 'container',
+                'suggested_type' => $suggested_type,
+                // options for UI
+                'auto_suggestion' => [
+                    'type' => $auto['type'],
+                    'widgetType' => $auto['widgetType'],
+                    'confidence' => $auto['confidence'],
+                ],
+                // overrides to be used when user keeps "auto"
+                'auto_overrides' => $auto['overrides'],
+                // lightweight mapping details for transparency
+                'mapping_details' => $auto['details'],
             ];
         }
 
@@ -230,6 +247,131 @@ class Elementor_Renderer
         }
 
         return $sections;
+    }
+
+    /**
+     * Create a best-effort auto mapping suggestion for a single section.
+     *
+     * This is intentionally based on the same structural heuristics used in
+     * conversion (WidgetConverters try_build_*), so preview stays aligned with
+     * import output.
+     *
+     * @return array{type:string,widgetType:?string,confidence:int,overrides:array,details:array}
+     */
+    private function build_auto_mapping_suggestion(array $child, string $suggested_type): array
+    {
+        $container_types = ['FRAME', 'GROUP', 'COMPONENT', 'INSTANCE'];
+        $figma_type = (string) ($child['type'] ?? '');
+
+        // default: container
+        $best = [
+            'type' => 'container',
+            'widgetType' => null,
+            'confidence' => 20,
+            'overrides' => [],
+            'details' => [
+                'reason' => 'fallback_container',
+                'detected' => $suggested_type,
+                'figma_type' => $figma_type,
+            ],
+        ];
+
+        if (!in_array($figma_type, $container_types, true)) {
+            return $best;
+        }
+
+        // slider/carousel
+        if (in_array($suggested_type, ['slider', 'carousel'], true)) {
+            $carousel = $this->widget_converters->try_build_carousel($child, $suggested_type);
+            if ($carousel !== null) {
+                $best['type'] = 'carousel';
+                $best['widgetType'] = 'image-carousel';
+                $best['confidence'] = 90;
+                $best['overrides'] = [
+                    // convert_node uses $component_override to force carousel/widget conversion
+                    // (slider/carousel types map to widget converters)
+                    'component_type' => 'carousel',
+                    // keep it compatible with current overrides contract: mapping uses child layer id
+                    // but existing import code expects overrides[child_id] = selected string.
+                    // We also embed suggested widgetType for UI debugging.
+                    'widgetType' => 'image-carousel',
+                    // store settings (optional) for better UI later
+                    'settings_preview' => $carousel['settings'] instanceof \stdClass ? $this->stdclass_to_array($carousel['settings']) : [],
+                ];
+                $best['details'] = [
+                    'reason' => 'widget_converter_carousel_match',
+                    'figma_type' => $figma_type,
+                ];
+                return $best;
+            }
+        }
+
+        // faq
+        if ($suggested_type === 'faq') {
+            $accordion = $this->widget_converters->try_build_accordion($child);
+            if ($accordion !== null) {
+                $best['type'] = 'faq';
+                $best['widgetType'] = 'accordion';
+                $best['confidence'] = 90;
+                $best['overrides'] = [
+                    'component_type' => 'faq',
+                    'widgetType' => 'accordion',
+                    'settings_preview' => $accordion['settings'] instanceof \stdClass ? $this->stdclass_to_array($accordion['settings']) : [],
+                ];
+                $best['details'] = [
+                    'reason' => 'widget_converter_accordion_match',
+                    'figma_type' => $figma_type,
+                ];
+                return $best;
+            }
+        }
+
+        // gallery
+        if ($suggested_type === 'gallery') {
+            $gallery = $this->widget_converters->try_build_gallery($child);
+            if ($gallery !== null) {
+                $best['type'] = 'gallery';
+                $best['widgetType'] = 'image-gallery';
+                $best['confidence'] = 90;
+                $best['overrides'] = [
+                    'component_type' => 'gallery',
+                    'widgetType' => 'image-gallery',
+                    'settings_preview' => $gallery['settings'] instanceof \stdClass ? $this->stdclass_to_array($gallery['settings']) : [],
+                ];
+                $best['details'] = [
+                    'reason' => 'widget_converter_gallery_match',
+                    'figma_type' => $figma_type,
+                ];
+                return $best;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * Convert stdClass to array recursively for safe JSON transport.
+     *
+     * @return array<string, mixed>
+     */
+    private function stdclass_to_array($value): array
+    {
+        if ($value instanceof \stdClass) {
+            $value = get_object_vars($value);
+        }
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($value as $k => $v) {
+            if ($v instanceof \stdClass || is_array($v)) {
+                $out[$k] = $this->stdclass_to_array($v);
+            } else {
+                $out[$k] = $v;
+            }
+        }
+        return $out;
     }
 
     /**
