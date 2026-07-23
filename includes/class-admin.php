@@ -27,6 +27,7 @@ class Admin
         'EXPORT_FAILED' => 'export_failed',
         'SYNC_FAILED' => 'sync_failed',
         'NO_PROGRESS' => 'no_progress',
+        'UNSUPPORTED_FILE_TYPE' => 'unsupported_file_type',
     ];
     private Plugin $plugin;
     private string $menu_slug = 'hello-figma';
@@ -260,7 +261,11 @@ class Admin
 
         $elementor_data = $this->plugin->get_renderer()->convert_file($file_key, $node_id ?: null, $overrides);
         if ($elementor_data === null) {
-            wp_send_json_error(['message' => __('Failed to convert Figma file.', 'hello-figma'), 'code' => self::ERROR_CODES['CONVERSION_FAILED']]);
+            $api_error = $this->plugin->get_figma_api()->get_last_error();
+            wp_send_json_error([
+                'message' => $api_error ?: __('Failed to convert Figma file.', 'hello-figma'),
+                'code' => $api_error ? self::ERROR_CODES['UNSUPPORTED_FILE_TYPE'] : self::ERROR_CODES['CONVERSION_FAILED'],
+            ]);
         }
 
         $this->set_import_progress($run_id, __('Converting sections...', 'hello-figma'), 30);
@@ -403,7 +408,11 @@ class Admin
         );
 
         if ($images === null) {
-            wp_send_json_error(['message' => __('Failed to fetch preview.', 'hello-figma'), 'code' => self::ERROR_CODES['FETCH_FAILED']]);
+            $api_error = $this->plugin->get_figma_api()->get_last_error();
+            wp_send_json_error([
+                'message' => $api_error ?: __('Failed to fetch preview.', 'hello-figma'),
+                'code' => $api_error ? self::ERROR_CODES['UNSUPPORTED_FILE_TYPE'] : self::ERROR_CODES['FETCH_FAILED'],
+            ]);
         }
 
         wp_send_json_success(['images' => $images]);
@@ -458,8 +467,10 @@ class Admin
         $structure = $this->plugin->get_renderer()->get_file_structure($file_key);
 
         if ($structure === null) {
+            $api_error = $this->plugin->get_figma_api()->get_last_error();
             wp_send_json_error([
-                'message' => __('Failed to fetch file structure. Please check your file key and token.', 'hello-figma'),
+                'message' => $api_error ?: __('Failed to fetch file structure. Please check your file key and token.', 'hello-figma'),
+                'code' => $api_error ? self::ERROR_CODES['UNSUPPORTED_FILE_TYPE'] : self::ERROR_CODES['FETCH_FAILED'],
             ]);
         }
 
@@ -539,6 +550,9 @@ class Admin
      * Accepts:
      *   https://www.figma.com/file/abc123DEF/Name
      *   https://www.figma.com/design/abc123DEF/Name
+     *   https://www.figma.com/make/abc123DEF/Name
+     *   https://www.figma.com/deck/abc123DEF/Name
+     *   https://www.figma.com/board/abc123DEF/Name
      *   abc123DEF
      */
     private function parse_file_key(string $input): string
@@ -548,8 +562,8 @@ class Admin
             return '';
         }
 
-        // Extract from full URL
-        if (preg_match('#figma\.com/(?:file|design)/([a-zA-Z0-9_-]+)#i', $input, $m)) {
+        // Extract from full URL (supports file, design, make, deck, board)
+        if (preg_match('#figma\.com/(?:file|design|make|deck|board)/([a-zA-Z0-9_-]+)#i', $input, $m)) {
             return $m[1];
         }
 

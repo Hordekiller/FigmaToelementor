@@ -490,14 +490,17 @@
          * Accepts both raw keys and full URLs:
          *   https://www.figma.com/file/abc123DEF/Name
          *   https://www.figma.com/design/abc123DEF/Name
+         *   https://www.figma.com/make/abc123DEF/Name
+         *   https://www.figma.com/deck/abc123DEF/Name
+         *   https://www.figma.com/board/abc123DEF/Name
          *   abc123DEF
          */
         parseFigmaUrl(input) {
             if (!input) return '';
 
-            // Try to match a full Figma URL
+            // Try to match a full Figma URL (supports file, design, make, deck, board)
             const match = input.match(
-                /figma\.com\/(?:file|design)\/([a-zA-Z0-9_-]+)/i
+                /figma\.com\/(?:file|design|make|deck|board)\/([a-zA-Z0-9_-]+)/i
             );
             if (match) {
                 return match[1];

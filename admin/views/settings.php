@@ -105,5 +105,7 @@
         <p><?php esc_html_e('Open your Figma design file. The URL looks like:', 'hello-figma'); ?></p>
         <code>https://www.figma.com/file/<strong>abc123DEFghi</strong>/My-Design</code>
         <p><?php esc_html_e('The part between "file/" and "/My-Design" is your file key.', 'hello-figma'); ?></p>
+        <p><?php esc_html_e('Supported URL formats: /file/, /design/, /make/, /deck/, /board/', 'hello-figma'); ?></p>
+        <p><strong><?php esc_html_e('Note:', 'hello-figma'); ?></strong> <?php esc_html_e('Figma Slides (Make) and Board files have limited API support. Use standard Figma Design files for best results.', 'hello-figma'); ?></p>
     </div>
 </div>

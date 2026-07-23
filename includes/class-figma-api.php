@@ -29,11 +29,21 @@ class Figma_API
     private const GCM_TAG_LEN = 16;
 
     private ?string $token = null;
+    private ?string $last_error = null;
 
     public function __construct()
     {
         $stored = get_option(self::TOKEN_OPTION, '');
         $this->token = $this->decrypt_token($stored);
+    }
+
+    /**
+     * Return the last descriptive error message set by the API client,
+     * or null if no error occurred.
+     */
+    public function get_last_error(): ?string
+    {
+        return $this->last_error;
     }
 
     public function set_token(string $token): void
@@ -380,6 +390,8 @@ class Figma_API
 
     private function do_request(string $endpoint, int $retries_left): ?array
     {
+        $this->last_error = null;
+
         if (empty($this->token)) {
             Logger::log('WARNING', 'FigmaAPI', 'Request skipped — no token set', [
                 'endpoint' => $endpoint,
@@ -446,6 +458,23 @@ class Figma_API
         }
 
         if ($code !== 200) {
+            $body_preview = substr($body, 0, 500);
+
+            // Detect unsupported file types (Make/Slides/Board etc.)
+            if ($code === 400 && stripos($body, 'File type not supported') !== false) {
+                $this->last_error = __(
+                    'This file type is not supported by the Figma API. Please use a standard Figma Design file (figma.com/file/... or figma.com/design/...). Figma Slides, Make, and Board files are not supported.',
+                    'hello-figma'
+                );
+                Logger::log('WARNING', 'FigmaAPI', 'Unsupported Figma file type', [
+                    'http_code' => $code,
+                    'body_preview' => $body_preview,
+                    'endpoint' => $endpoint,
+                ]);
+                do_action('hello_figma_api_error', $this->last_error, $endpoint);
+                return null;
+            }
+
             $error_message = sprintf(
                 'Figma API error [%d]: %s',
                 $code,
@@ -454,7 +483,7 @@ class Figma_API
             Logger::log('WARNING', 'FigmaAPI', 'Non-200 Figma API response', [
                 'http_code' => $code,
                 'response_message' => wp_remote_retrieve_response_message($response),
-                'body_preview' => substr($body, 0, 500),
+                'body_preview' => $body_preview,
                 'endpoint' => $endpoint,
             ]);
             do_action('hello_figma_api_error', $error_message, $endpoint);
